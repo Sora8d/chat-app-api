@@ -1,0 +1,1 @@
+API that handles the authentication service
