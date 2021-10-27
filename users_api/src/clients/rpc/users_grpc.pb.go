@@ -19,9 +19,11 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersProtoInterfaceClient interface {
 	GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserErrorResponse, error)
+	GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileErrorResponse, error)
 	DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*Error, error)
-	CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Error, error)
-	ModifyUser(ctx context.Context, in *ModifyUserRequest, opts ...grpc.CallOption) (*Error, error)
+	CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UserProfileUuidResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Error, error)
+	UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*Error, error)
 }
 
 type usersProtoInterfaceClient struct {
@@ -41,6 +43,15 @@ func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid,
 	return out, nil
 }
 
+func (c *usersProtoInterfaceClient) GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileErrorResponse, error) {
+	out := new(UserProfileErrorResponse)
+	err := c.cc.Invoke(ctx, "/UsersProtoInterface/GetUserProfileByUuid", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*Error, error) {
 	out := new(Error)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/DeleteUserByUuid", in, out, opts...)
@@ -50,8 +61,8 @@ func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uu
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Error, error) {
-	out := new(Error)
+func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UserProfileUuidResponse, error) {
+	out := new(UserProfileUuidResponse)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -59,9 +70,18 @@ func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *User, op
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) ModifyUser(ctx context.Context, in *ModifyUserRequest, opts ...grpc.CallOption) (*Error, error) {
+func (c *usersProtoInterfaceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Error, error) {
 	out := new(Error)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/ModifyUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UpdateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*Error, error) {
+	out := new(Error)
+	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UpdateActive", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +93,11 @@ func (c *usersProtoInterfaceClient) ModifyUser(ctx context.Context, in *ModifyUs
 // for forward compatibility
 type UsersProtoInterfaceServer interface {
 	GetUserByUuid(context.Context, *Uuid) (*UserErrorResponse, error)
+	GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileErrorResponse, error)
 	DeleteUserByUuid(context.Context, *Uuid) (*Error, error)
-	CreateUser(context.Context, *User) (*Error, error)
-	ModifyUser(context.Context, *ModifyUserRequest) (*Error, error)
+	CreateUser(context.Context, *UserProfile) (*UserProfileUuidResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*Error, error)
+	UpdateActive(context.Context, *UpdateActiveRequest) (*Error, error)
 	mustEmbedUnimplementedUsersProtoInterfaceServer()
 }
 
@@ -86,14 +108,20 @@ type UnimplementedUsersProtoInterfaceServer struct {
 func (UnimplementedUsersProtoInterfaceServer) GetUserByUuid(context.Context, *Uuid) (*UserErrorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByUuid not implemented")
 }
+func (UnimplementedUsersProtoInterfaceServer) GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileErrorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfileByUuid not implemented")
+}
 func (UnimplementedUsersProtoInterfaceServer) DeleteUserByUuid(context.Context, *Uuid) (*Error, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserByUuid not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) CreateUser(context.Context, *User) (*Error, error) {
+func (UnimplementedUsersProtoInterfaceServer) CreateUser(context.Context, *UserProfile) (*UserProfileUuidResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) ModifyUser(context.Context, *ModifyUserRequest) (*Error, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ModifyUser not implemented")
+func (UnimplementedUsersProtoInterfaceServer) UpdateUser(context.Context, *UpdateUserRequest) (*Error, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedUsersProtoInterfaceServer) UpdateActive(context.Context, *UpdateActiveRequest) (*Error, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateActive not implemented")
 }
 func (UnimplementedUsersProtoInterfaceServer) mustEmbedUnimplementedUsersProtoInterfaceServer() {}
 
@@ -126,6 +154,24 @@ func _UsersProtoInterface_GetUserByUuid_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersProtoInterface_GetUserProfileByUuid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Uuid)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersProtoInterfaceServer).GetUserProfileByUuid(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UsersProtoInterface/GetUserProfileByUuid",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersProtoInterfaceServer).GetUserProfileByUuid(ctx, req.(*Uuid))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsersProtoInterface_DeleteUserByUuid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Uuid)
 	if err := dec(in); err != nil {
@@ -145,7 +191,7 @@ func _UsersProtoInterface_DeleteUserByUuid_Handler(srv interface{}, ctx context.
 }
 
 func _UsersProtoInterface_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(User)
+	in := new(UserProfile)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -157,25 +203,43 @@ func _UsersProtoInterface_CreateUser_Handler(srv interface{}, ctx context.Contex
 		FullMethod: "/UsersProtoInterface/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersProtoInterfaceServer).CreateUser(ctx, req.(*User))
+		return srv.(UsersProtoInterfaceServer).CreateUser(ctx, req.(*UserProfile))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsersProtoInterface_ModifyUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ModifyUserRequest)
+func _UsersProtoInterface_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsersProtoInterfaceServer).ModifyUser(ctx, in)
+		return srv.(UsersProtoInterfaceServer).UpdateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/ModifyUser",
+		FullMethod: "/UsersProtoInterface/UpdateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersProtoInterfaceServer).ModifyUser(ctx, req.(*ModifyUserRequest))
+		return srv.(UsersProtoInterfaceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsersProtoInterface_UpdateActive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateActiveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersProtoInterfaceServer).UpdateActive(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UsersProtoInterface/UpdateActive",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersProtoInterfaceServer).UpdateActive(ctx, req.(*UpdateActiveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -192,6 +256,10 @@ var UsersProtoInterface_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UsersProtoInterface_GetUserByUuid_Handler,
 		},
 		{
+			MethodName: "GetUserProfileByUuid",
+			Handler:    _UsersProtoInterface_GetUserProfileByUuid_Handler,
+		},
+		{
 			MethodName: "DeleteUserByUuid",
 			Handler:    _UsersProtoInterface_DeleteUserByUuid_Handler,
 		},
@@ -200,8 +268,12 @@ var UsersProtoInterface_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UsersProtoInterface_CreateUser_Handler,
 		},
 		{
-			MethodName: "ModifyUser",
-			Handler:    _UsersProtoInterface_ModifyUser_Handler,
+			MethodName: "UpdateUser",
+			Handler:    _UsersProtoInterface_UpdateUser_Handler,
+		},
+		{
+			MethodName: "UpdateActive",
+			Handler:    _UsersProtoInterface_UpdateActive_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

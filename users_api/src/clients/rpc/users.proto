@@ -10,9 +10,11 @@ service UsersProtoInterface{
 
     rpc DeleteUserByUuid(Uuid) returns (Error) {}
 
-    rpc CreateUser(UserProfile) returns (Error) {}
+    rpc CreateUser(UserProfile) returns (UserProfileUuidResponse) {}
 
-    rpc ModifyUser(ModifyUserRequest) returns (Error) {}
+    rpc UpdateUser(UpdateUserRequest) returns (Error) {}
+
+    rpc UpdateActive(UpdateActiveRequest) returns (Error) {}
 }
 
 message User{
@@ -21,17 +23,15 @@ message User{
     int64 user_profile_id=3;
 }
 
-message UserProfile {
-    bool active= 3;
-    string phone = 4;
-    string user_name= 5;
-    string avatar_url= 6;
-}
 
-message ModifyUserRequest{
-    Uuid uuid =1;
-    UserProfile user =2;
-    bool partial=3;
+message UserProfile {
+    bool active= 1;
+    string phone = 2;
+    string first_name= 3;
+    string last_name= 4;
+    string user_name= 5;
+    string description= 6;
+    string avatar_url= 7;
 }
 
 message Uuid {
@@ -41,7 +41,6 @@ message Uuid {
 message Error{
     int32 status=1;
     string message=2;
-    string error=3;
 }
 
 message UserErrorResponse{
@@ -53,3 +52,24 @@ message UserProfileErrorResponse{
     UserProfile user =1;
     Error error =2;
 }
+
+message UserProfileUuid{
+    Uuid uuid =1;
+    UserProfile user =2;
+}
+
+message UpdateUserRequest{
+    UserProfileUuid content = 1;
+    bool partial=2;
+}
+
+message UserProfileUuidResponse{
+    UserProfileUuid content = 1;
+    Error error =2;
+}
+
+message UpdateActiveRequest{
+    Uuid uuid=1;
+    bool active =2;
+}
+
