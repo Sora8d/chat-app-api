@@ -18,12 +18,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersProtoInterfaceClient interface {
-	GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserErrorResponse, error)
-	GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileErrorResponse, error)
-	DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*Error, error)
-	CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UserProfileUuidResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Error, error)
-	UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*Error, error)
+	GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error)
+	GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileMsgResponse, error)
+	DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*SvrMsg, error)
+	CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UuidResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserProfileMsgResponse, error)
+	UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*SvrMsg, error)
 }
 
 type usersProtoInterfaceClient struct {
@@ -34,8 +34,8 @@ func NewUsersProtoInterfaceClient(cc grpc.ClientConnInterface) UsersProtoInterfa
 	return &usersProtoInterfaceClient{cc}
 }
 
-func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserErrorResponse, error) {
-	out := new(UserErrorResponse)
+func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error) {
+	out := new(UserMsgResponse)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/GetUserByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -43,8 +43,8 @@ func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid,
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileErrorResponse, error) {
-	out := new(UserProfileErrorResponse)
+func (c *usersProtoInterfaceClient) GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileMsgResponse, error) {
+	out := new(UserProfileMsgResponse)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/GetUserProfileByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -52,8 +52,8 @@ func (c *usersProtoInterfaceClient) GetUserProfileByUuid(ctx context.Context, in
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*Error, error) {
-	out := new(Error)
+func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*SvrMsg, error) {
+	out := new(SvrMsg)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/DeleteUserByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -61,8 +61,8 @@ func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uu
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UserProfileUuidResponse, error) {
-	out := new(UserProfileUuidResponse)
+func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UuidResponse, error) {
+	out := new(UuidResponse)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -70,8 +70,8 @@ func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *UserProf
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Error, error) {
-	out := new(Error)
+func (c *usersProtoInterfaceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserProfileMsgResponse, error) {
+	out := new(UserProfileMsgResponse)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -79,8 +79,8 @@ func (c *usersProtoInterfaceClient) UpdateUser(ctx context.Context, in *UpdateUs
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*Error, error) {
-	out := new(Error)
+func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*SvrMsg, error) {
+	out := new(SvrMsg)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UpdateActive", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -92,12 +92,12 @@ func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *Update
 // All implementations must embed UnimplementedUsersProtoInterfaceServer
 // for forward compatibility
 type UsersProtoInterfaceServer interface {
-	GetUserByUuid(context.Context, *Uuid) (*UserErrorResponse, error)
-	GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileErrorResponse, error)
-	DeleteUserByUuid(context.Context, *Uuid) (*Error, error)
-	CreateUser(context.Context, *UserProfile) (*UserProfileUuidResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*Error, error)
-	UpdateActive(context.Context, *UpdateActiveRequest) (*Error, error)
+	GetUserByUuid(context.Context, *Uuid) (*UserMsgResponse, error)
+	GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileMsgResponse, error)
+	DeleteUserByUuid(context.Context, *Uuid) (*SvrMsg, error)
+	CreateUser(context.Context, *UserProfile) (*UuidResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UserProfileMsgResponse, error)
+	UpdateActive(context.Context, *UpdateActiveRequest) (*SvrMsg, error)
 	mustEmbedUnimplementedUsersProtoInterfaceServer()
 }
 
@@ -105,22 +105,22 @@ type UsersProtoInterfaceServer interface {
 type UnimplementedUsersProtoInterfaceServer struct {
 }
 
-func (UnimplementedUsersProtoInterfaceServer) GetUserByUuid(context.Context, *Uuid) (*UserErrorResponse, error) {
+func (UnimplementedUsersProtoInterfaceServer) GetUserByUuid(context.Context, *Uuid) (*UserMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByUuid not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileErrorResponse, error) {
+func (UnimplementedUsersProtoInterfaceServer) GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfileByUuid not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) DeleteUserByUuid(context.Context, *Uuid) (*Error, error) {
+func (UnimplementedUsersProtoInterfaceServer) DeleteUserByUuid(context.Context, *Uuid) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserByUuid not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) CreateUser(context.Context, *UserProfile) (*UserProfileUuidResponse, error) {
+func (UnimplementedUsersProtoInterfaceServer) CreateUser(context.Context, *UserProfile) (*UuidResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) UpdateUser(context.Context, *UpdateUserRequest) (*Error, error) {
+func (UnimplementedUsersProtoInterfaceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserProfileMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) UpdateActive(context.Context, *UpdateActiveRequest) (*Error, error) {
+func (UnimplementedUsersProtoInterfaceServer) UpdateActive(context.Context, *UpdateActiveRequest) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateActive not implemented")
 }
 func (UnimplementedUsersProtoInterfaceServer) mustEmbedUnimplementedUsersProtoInterfaceServer() {}

@@ -3,7 +3,7 @@ module github.com/flydevs/chat-app-api/users-api
 go 1.17
 
 require (
-	github.com/flydevs/chat-app-api/common v0.0.0-20211027145205-03e1f38bdb94
+	github.com/flydevs/chat-app-api/common v0.0.0-20211028211026-2671d8ced2ec
 	github.com/jackc/pgx/v4 v4.13.0
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1

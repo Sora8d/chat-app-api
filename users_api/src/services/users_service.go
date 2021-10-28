@@ -1,18 +1,20 @@
 package services
 
 import (
-	"github.com/flydevs/chat-app-api/common/api_errors"
+	"net/http"
+
+	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/users-api/src/domain/users"
 	"github.com/flydevs/chat-app-api/users-api/src/repository/db"
 )
 
 type UsersServiceInterface interface {
-	CreateUser(users.UserProfile) (*users.UuidandProfile, api_errors.Api_error)
-	GetUser(string) (*users.User, api_errors.Api_error)
-	GetUserProfile(string) (*users.UserProfile, api_errors.Api_error)
-	DeleteUser(string) api_errors.Api_error
-	UpdateUserProfile(users.UuidandProfile, bool) (*users.UserProfile, api_errors.Api_error)
-	UpdateUserProfileActive(string, bool) api_errors.Api_error
+	CreateUser(users.UserProfile) (*string, server_message.Svr_message)
+	GetUser(string) (*users.User, server_message.Svr_message)
+	GetUserProfile(string) (*users.UserProfile, server_message.Svr_message)
+	DeleteUser(string) server_message.Svr_message
+	UpdateUserProfile(users.UuidandProfile, bool) (*users.UserProfile, server_message.Svr_message)
+	UpdateUserProfileActive(string, bool) server_message.Svr_message
 }
 
 type userService struct {
@@ -23,34 +25,37 @@ func NewUsersService(dbrepo db.UserDbRepository) UsersServiceInterface {
 	return userService{dbRepo: dbrepo}
 }
 
-func (us userService) CreateUser(up users.UserProfile) (*users.UuidandProfile, api_errors.Api_error) {
-	return us.dbRepo.CreateUser(up)
+func (us userService) CreateUser(up users.UserProfile) (*string, server_message.Svr_message) {
+	uuid, aErr := us.dbRepo.CreateUser(up)
+	if aErr != nil {
+		return nil, aErr
+	}
+	return uuid, server_message.NewCustomMessage(http.StatusOK, "user created")
 }
 
-func (us userService) GetUser(uuid string) (*users.User, api_errors.Api_error) {
-	return us.dbRepo.GetUserByUuid(uuid)
-}
-
-func (us userService) GetUserProfile(uuid string) (*users.UserProfile, api_errors.Api_error) {
+func (us userService) GetUser(uuid string) (*users.User, server_message.Svr_message) {
 	user, aErr := us.dbRepo.GetUserByUuid(uuid)
 	if aErr != nil {
 		return nil, aErr
 	}
-	result_profile := users.UserProfile{Id: user.UserProfileId}
-	return us.dbRepo.GetUserProfileById(result_profile)
+	return user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
 }
 
-func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*users.UserProfile, api_errors.Api_error) {
+func (us userService) GetUserProfile(uuid string) (*users.UserProfile, server_message.Svr_message) {
+	user, aErr := us.dbRepo.GetUserProfileById(uuid)
+	if aErr != nil {
+		return nil, aErr
+	}
+	return user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
+}
+
+func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*users.UserProfile, server_message.Svr_message) {
 	var (
 		uuid    = u.Uuid
 		updates = u.Profile
 	)
-	user, aErr := us.GetUser(uuid)
-	if aErr != nil {
-		return nil, aErr
-	}
 	if partial {
-		profile_with_information, aErr := us.dbRepo.GetUserProfileById(users.UserProfile{Id: user.UserProfileId})
+		profile_with_information, aErr := us.dbRepo.GetUserProfileById(uuid)
 		if aErr != nil {
 			return nil, aErr
 		}
@@ -72,23 +77,33 @@ func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*
 		if updates.Description != "" {
 			profile_with_information.Description = updates.Description
 		}
-		return us.dbRepo.UpdateUserProfile(*profile_with_information)
+		users, aErr := us.dbRepo.UpdateUserProfile(uuid, *profile_with_information)
+		if aErr != nil {
+			return nil, aErr
+		}
+		return users, server_message.NewCustomMessage(http.StatusOK, "user updated")
 	}
-	updates.Id = user.UserProfileId
 	if updates.Phone == "" {
-		return nil, api_errors.NewBadRequestError("the requested no_partial, updated brings a nil phone value")
+		return nil, server_message.NewBadRequestError("the request is marked as no_partial, but updating will bring a nil phone value")
 	}
-	return us.dbRepo.UpdateUserProfile(updates)
+	users, aErr := us.dbRepo.UpdateUserProfile(uuid, updates)
+	if aErr != nil {
+		return nil, aErr
+	}
+	return users, server_message.NewCustomMessage(http.StatusOK, "user updated")
 }
 
-func (us userService) UpdateUserProfileActive(uuid string, active bool) api_errors.Api_error {
-	user, aErr := us.GetUser(uuid)
+func (us userService) UpdateUserProfileActive(uuid string, active bool) server_message.Svr_message {
+	aErr := us.dbRepo.UpdateUserProfileActive(uuid, active)
 	if aErr != nil {
 		return aErr
 	}
-	return us.dbRepo.UpdateUserProfileActive(users.UserProfile{Id: user.UserProfileId, Active: active})
+	return server_message.NewCustomMessage(http.StatusOK, "active status updated")
 }
 
-func (us userService) DeleteUser(uuid string) api_errors.Api_error {
-	return us.dbRepo.DeleteUser(uuid)
+func (us userService) DeleteUser(uuid string) server_message.Svr_message {
+	if aErr := us.dbRepo.DeleteUser(uuid); aErr != nil {
+		return aErr
+	}
+	return server_message.NewCustomMessage(http.StatusOK, "user deleted")
 }

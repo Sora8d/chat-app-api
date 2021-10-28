@@ -1,5 +1,7 @@
 package services
 
+//DEPRECATED, client_test already checks almost the same business logic
+/*
 import (
 	"fmt"
 	"net/http"
@@ -17,6 +19,7 @@ const (
 	querydroptabletestuser          = "DROP TABLE IF EXISTS user_table;"
 	querycreatetabletestuserprofile = `CREATE TABLE user_profile(
 		id BIGSERIAL PRIMARY KEY,
+		user_id bigint unique references user_table(id) on delete cascade
 		active bool not null default true,
 		phone varchar unique not null,
 		first_name varchar,
@@ -27,8 +30,7 @@ const (
 	);`
 	querycreatetabletestuser = `CREATE TABLE user_table(
 		id BIGSERIAL PRIMARY KEY,
-		uuid uuid DEFAULT uuid_generate_v4 (),
-		user_profile_id bigint unique references user_profile(id)
+		uuid uuid DEFAULT uuid_generate_v4 ()
 	);
 	`
 )
@@ -72,10 +74,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestCreateUser(t *testing.T) {
-	result, aErr := svc.CreateUser(create_user_profile)
+	aErr := svc.CreateUser(create_user_profile)
 	if aErr != nil {
-		t.Error(aErr.GetFormatted(), aErr.GetError())
-		t.Log(aErr.GetFormatted(), aErr.GetError())
+		t.Error(aErr.GetFormatted())
+		t.Log(aErr.GetFormatted())
 		return
 	}
 
@@ -242,3 +244,4 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 }
+*/

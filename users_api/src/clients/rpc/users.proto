@@ -4,23 +4,22 @@ option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc";
 
 service UsersProtoInterface{
 
-    rpc GetUserByUuid(Uuid) returns (UserErrorResponse) {}
+    rpc GetUserByUuid(Uuid) returns (UserMsgResponse) {}
 
-    rpc GetUserProfileByUuid(Uuid) returns (UserProfileErrorResponse) {}
+    rpc GetUserProfileByUuid(Uuid) returns (UserProfileMsgResponse) {}
 
-    rpc DeleteUserByUuid(Uuid) returns (Error) {}
+    rpc DeleteUserByUuid(Uuid) returns (Svr_msg) {}
 
-    rpc CreateUser(UserProfile) returns (UserProfileUuidResponse) {}
+    rpc CreateUser(UserProfile) returns (UuidResponse) {}
 
-    rpc UpdateUser(UpdateUserRequest) returns (Error) {}
+    rpc UpdateUser(UpdateUserRequest) returns (UserProfileMsgResponse) {}
 
-    rpc UpdateActive(UpdateActiveRequest) returns (Error) {}
+    rpc UpdateActive(UpdateActiveRequest) returns (Svr_msg) {}
 }
 
 message User{
     int64 id =1;
     Uuid uuid =2;
-    int64 user_profile_id=3;
 }
 
 
@@ -38,19 +37,19 @@ message Uuid {
     string uuid =1;
 }
 
-message Error{
+message Svr_msg{
     int32 status=1;
     string message=2;
 }
 
-message UserErrorResponse{
+message UserMsgResponse{
     User user =1;
-    Error error =2;
+    Svr_msg msg =2;
 }
 
-message UserProfileErrorResponse{
+message UserProfileMsgResponse{
     UserProfile user =1;
-    Error error =2;
+    Svr_msg msg =2;
 }
 
 message UserProfileUuid{
@@ -63,9 +62,9 @@ message UpdateUserRequest{
     bool partial=2;
 }
 
-message UserProfileUuidResponse{
-    UserProfileUuid content = 1;
-    Error error =2;
+message UuidResponse{
+    Uuid uuid = 1;
+    Svr_msg msg =2;
 }
 
 message UpdateActiveRequest{

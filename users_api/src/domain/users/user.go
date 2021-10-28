@@ -5,13 +5,13 @@ import (
 )
 
 type User struct {
-	Id            int64  `json:"id"`
-	Uuid          string `json:"uuid"`
-	UserProfileId int64  `json:"user_profile_id"`
+	Id   int64  `json:"id"`
+	Uuid string `json:"uuid"`
 }
 
 type UserProfile struct {
 	Id          int64  `json:"id,omitempty"`
+	UserId      int64  `json:"user_id"`
 	Active      bool   `json:"active"`
 	Phone       string `json:"phone"`
 	FirstName   string `json:"first_name"`
@@ -28,13 +28,11 @@ type UuidandProfile struct {
 
 func (us User) PoblateUser_StructtoProto(pu *pb.User) {
 	pu.Id = us.Id
-	pu.UserProfileId = us.UserProfileId
 	pu.Uuid = &pb.Uuid{Uuid: us.Uuid}
 }
 
 func (us *User) PoblateUser_PrototoStruct(pu *pb.User) {
 	us.Id = pu.Id
-	us.UserProfileId = pu.UserProfileId
 	us.Uuid = pu.Uuid.Uuid
 }
 
