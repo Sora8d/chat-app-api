@@ -10,32 +10,42 @@ service UsersProtoInterface{
 
     rpc DeleteUserByUuid(Uuid) returns (Svr_msg) {}
 
-    rpc CreateUser(UserProfile) returns (UuidResponse) {}
+    rpc CreateUser(RegisterUser) returns (Svr_msg) {}
 
     rpc UpdateUser(UpdateUserRequest) returns (UserProfileMsgResponse) {}
 
     rpc UpdateActive(UpdateActiveRequest) returns (Svr_msg) {}
-}
 
-message User{
-    int64 id =1;
-    Uuid uuid =2;
-}
-
-
-message UserProfile {
-    bool active= 1;
-    string phone = 2;
-    string first_name= 3;
-    string last_name= 4;
-    string user_name= 5;
-    string description= 6;
-    string avatar_url= 7;
+    rpc UserLogin(User) returns (UserMsgResponse) {}
 }
 
 message Uuid {
     string uuid =1;
 }
+
+message User{
+    int64 id =1;
+    Uuid uuid =2;
+    string login_user =3;
+    string login_password =4;
+}
+
+message UserProfile {
+    bool active= 1;
+    string phone = 2;
+    string first_name= 4;
+    string last_name= 5;
+    string user_name= 6;
+    string description= 7;
+    string avatar_url= 8;
+    string created_at =9;
+}
+
+message RegisterUser{
+    User login_info =1;
+    UserProfile profile_info= 2;
+}
+
 
 message Svr_msg{
     int32 status=1;
@@ -60,11 +70,6 @@ message UserProfileUuid{
 message UpdateUserRequest{
     UserProfileUuid content = 1;
     bool partial=2;
-}
-
-message UuidResponse{
-    Uuid uuid = 1;
-    Svr_msg msg =2;
 }
 
 message UpdateActiveRequest{

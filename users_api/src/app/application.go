@@ -13,7 +13,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-var usersService services.UsersServiceInterface
+var (
+	usersService services.UsersServiceInterface
+	accroles     = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
+)
+
+// usersOauthService
 
 func StartApp() {
 	postgresql.DbInit()
@@ -25,7 +30,9 @@ func StartApp() {
 	if err != nil {
 		panic(err)
 	}
+	oauth_interceptor := services.NewAuthInterceptor(accroles)
 	var opts []grpc.ServerOption
+	opts = append(opts, grpc.UnaryInterceptor(oauth_interceptor.Unary()))
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterUsersProtoInterfaceServer(grpcServer, userServer)
 	grpcServer.Serve(conn)

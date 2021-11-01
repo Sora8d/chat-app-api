@@ -9,7 +9,8 @@ import (
 )
 
 type UsersServiceInterface interface {
-	CreateUser(users.UserProfile) (*string, server_message.Svr_message)
+	CreateUser(users.RegisterUser) server_message.Svr_message
+	LoginUser(users.User) (*users.User, server_message.Svr_message)
 	GetUser(string) (*users.User, server_message.Svr_message)
 	GetUserProfile(string) (*users.UserProfile, server_message.Svr_message)
 	DeleteUser(string) server_message.Svr_message
@@ -25,12 +26,22 @@ func NewUsersService(dbrepo db.UserDbRepository) UsersServiceInterface {
 	return userService{dbRepo: dbrepo}
 }
 
-func (us userService) CreateUser(up users.UserProfile) (*string, server_message.Svr_message) {
-	uuid, aErr := us.dbRepo.CreateUser(up)
+func (us userService) CreateUser(uc users.RegisterUser) server_message.Svr_message {
+	uc.LoginInfo.LoginPassword = users.HashPassword(uc.LoginInfo.LoginPassword)
+	aErr := us.dbRepo.CreateUser(uc)
 	if aErr != nil {
-		return nil, aErr
+		return aErr
 	}
-	return uuid, server_message.NewCustomMessage(http.StatusOK, "user created")
+	return server_message.NewCustomMessage(http.StatusOK, "user created")
+}
+
+func (us userService) LoginUser(u users.User) (*users.User, server_message.Svr_message) {
+	u.LoginPassword = users.HashPassword(u.LoginPassword)
+	res_user, aerr := us.dbRepo.LoginUser(u)
+	if aerr != nil {
+		return nil, aerr
+	}
+	return res_user, server_message.NewCustomMessage(http.StatusOK, "user logged")
 }
 
 func (us userService) GetUser(uuid string) (*users.User, server_message.Svr_message) {

@@ -20,6 +20,7 @@ const (
 	querycreatetabletestuserprofile = `CREATE TABLE user_profile(
 		id BIGSERIAL PRIMARY KEY,
 		user_id bigint unique references user_table(id) on delete cascade
+		created_at timestamptz default (now() at time zone 'utc')
 		active bool not null default true,
 		phone varchar unique not null,
 		first_name varchar,

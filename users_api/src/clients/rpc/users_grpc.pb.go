@@ -21,9 +21,10 @@ type UsersProtoInterfaceClient interface {
 	GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error)
 	GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileMsgResponse, error)
 	DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*SvrMsg, error)
-	CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UuidResponse, error)
+	CreateUser(ctx context.Context, in *RegisterUser, opts ...grpc.CallOption) (*SvrMsg, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserProfileMsgResponse, error)
 	UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*SvrMsg, error)
+	UserLogin(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserMsgResponse, error)
 }
 
 type usersProtoInterfaceClient struct {
@@ -61,8 +62,8 @@ func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uu
 	return out, nil
 }
 
-func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *UserProfile, opts ...grpc.CallOption) (*UuidResponse, error) {
-	out := new(UuidResponse)
+func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *RegisterUser, opts ...grpc.CallOption) (*SvrMsg, error) {
+	out := new(SvrMsg)
 	err := c.cc.Invoke(ctx, "/UsersProtoInterface/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -88,6 +89,15 @@ func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *usersProtoInterfaceClient) UserLogin(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserMsgResponse, error) {
+	out := new(UserMsgResponse)
+	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UserLogin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsersProtoInterfaceServer is the server API for UsersProtoInterface service.
 // All implementations must embed UnimplementedUsersProtoInterfaceServer
 // for forward compatibility
@@ -95,9 +105,10 @@ type UsersProtoInterfaceServer interface {
 	GetUserByUuid(context.Context, *Uuid) (*UserMsgResponse, error)
 	GetUserProfileByUuid(context.Context, *Uuid) (*UserProfileMsgResponse, error)
 	DeleteUserByUuid(context.Context, *Uuid) (*SvrMsg, error)
-	CreateUser(context.Context, *UserProfile) (*UuidResponse, error)
+	CreateUser(context.Context, *RegisterUser) (*SvrMsg, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UserProfileMsgResponse, error)
 	UpdateActive(context.Context, *UpdateActiveRequest) (*SvrMsg, error)
+	UserLogin(context.Context, *User) (*UserMsgResponse, error)
 	mustEmbedUnimplementedUsersProtoInterfaceServer()
 }
 
@@ -114,7 +125,7 @@ func (UnimplementedUsersProtoInterfaceServer) GetUserProfileByUuid(context.Conte
 func (UnimplementedUsersProtoInterfaceServer) DeleteUserByUuid(context.Context, *Uuid) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserByUuid not implemented")
 }
-func (UnimplementedUsersProtoInterfaceServer) CreateUser(context.Context, *UserProfile) (*UuidResponse, error) {
+func (UnimplementedUsersProtoInterfaceServer) CreateUser(context.Context, *RegisterUser) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 func (UnimplementedUsersProtoInterfaceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserProfileMsgResponse, error) {
@@ -122,6 +133,9 @@ func (UnimplementedUsersProtoInterfaceServer) UpdateUser(context.Context, *Updat
 }
 func (UnimplementedUsersProtoInterfaceServer) UpdateActive(context.Context, *UpdateActiveRequest) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateActive not implemented")
+}
+func (UnimplementedUsersProtoInterfaceServer) UserLogin(context.Context, *User) (*UserMsgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserLogin not implemented")
 }
 func (UnimplementedUsersProtoInterfaceServer) mustEmbedUnimplementedUsersProtoInterfaceServer() {}
 
@@ -191,7 +205,7 @@ func _UsersProtoInterface_DeleteUserByUuid_Handler(srv interface{}, ctx context.
 }
 
 func _UsersProtoInterface_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserProfile)
+	in := new(RegisterUser)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -203,7 +217,7 @@ func _UsersProtoInterface_CreateUser_Handler(srv interface{}, ctx context.Contex
 		FullMethod: "/UsersProtoInterface/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersProtoInterfaceServer).CreateUser(ctx, req.(*UserProfile))
+		return srv.(UsersProtoInterfaceServer).CreateUser(ctx, req.(*RegisterUser))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -244,6 +258,24 @@ func _UsersProtoInterface_UpdateActive_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersProtoInterface_UserLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersProtoInterfaceServer).UserLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UsersProtoInterface/UserLogin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersProtoInterfaceServer).UserLogin(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsersProtoInterface_ServiceDesc is the grpc.ServiceDesc for UsersProtoInterface service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +306,10 @@ var UsersProtoInterface_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateActive",
 			Handler:    _UsersProtoInterface_UpdateActive_Handler,
+		},
+		{
+			MethodName: "UserLogin",
+			Handler:    _UsersProtoInterface_UserLogin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
