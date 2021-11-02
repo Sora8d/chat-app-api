@@ -6,6 +6,7 @@ var Config map[string]string
 
 func init() {
 	Config = map[string]string{
-		"DATABASE": os.Getenv("DATABASE_URL"),
+		"DATABASE":      os.Getenv("DATABASE_URL"),
+		"USERS_ADDRESS": os.Getenv("USERS_ADDRESS"),
 	}
 }
