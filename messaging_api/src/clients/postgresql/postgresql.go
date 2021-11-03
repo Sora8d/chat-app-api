@@ -26,7 +26,7 @@ var (
 	current_client dbclient
 )
 
-func DbInit() {
+func init() {
 	datasource := config.Config["DATABASE"]
 	var err error
 	current_client.conn, err = pgx.Connect(context.Background(), datasource)

@@ -11,22 +11,22 @@ import (
 
 const (
 	queryInsertConversation     = "INSERT INTO conversation(type, name, description, avatar_url) VALUES ($1,$2,$3,$4) RETURNING uuid;"
-	queryCreateUserConversation = "INSERT INTO user_conversation(user_id, user_uuid, conversation_id) VALUES($1, $2, $3, $4) RETURNING uuid;"
-	queryCreateMessage          = "INSERT INTO message(conversation_id, conversation_uuid, author_id, author_uuid, text) VALUES($1, $2, $3, $4, $5) RETURNING uuid;"
+	queryCreateUserConversation = "INSERT INTO user_conversation(user_id, user_uuid, conversation_id, conversation_uuid) VALUES($1, $2, $3, $4) RETURNING uuid;"
+	queryCreateMessage          = "INSERT INTO message_table(conversation_id, conversation_uuid, author_id, author_uuid, body) VALUES($1, $2, $3, $4, $5) RETURNING uuid;"
 
-	queryGetConversationsFromUser  = "SELECT c.id, c.uuid, c.type, c.created_at, c.last_message_uuid, c.name, c.description, c.avatar_url FROM conversation JOIN user_conversation uc ON c.id = uc.conversation_id WHERE uc.user_uuid =$1;"
-	queryGetConversationByUuid     = "SELECT id, uuid, type, created_at, last_message_uuid, name, description, avatar_url FROM conversation WHERE id=$1;"
+	queryGetConversationsFromUser  = "SELECT c.id, c.uuid, c.type, date_part('epoch',c.created_at), c.last_message_uuid, c.name, c.description, c.avatar_url FROM conversation c JOIN user_conversation uc ON c.id = uc.conversation_id WHERE uc.user_uuid =$1;"
+	queryGetConversationByUuid     = "SELECT id, uuid, type, date_part('epoch',created_at), last_message_uuid, name, description, avatar_url FROM conversation WHERE uuid=$1;"
 	queryConversationUpdateInfo    = "UPDATE conversation SET name=$2, description=$3, avatar_url=$4 WHERE uuid=$1 RETURNING uuid, name, description, avatar_url;"
 	queryConversationUpdateMsgUuid = "UPDATE conversation SET last_message_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_message_uuid;"
 
-	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.text, m.created_at, m.updated_at FROM message m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1;"
-	queryGetMessageByAuthorId          = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, text, created_at, updated_at FROM message WHERE author_id=$1;"
-	queryGetMessageByUuid              = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, text, created_at, updated_at FROM message WHERE uuid=$1;"
-	queryUpdateMessage                 = "UPDATE message SET text=$2, updated_at=timezone('utc'::text, now()) WHERE uuid=$1 RETURNING uuid, text, updated_at;"
+	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1;"
+	queryGetMessageByAuthorId          = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, body, date_part('epoch',created_at), date_part('epoch',updated_at) FROM message_table WHERE author_id=$1;"
+	queryGetMessageByUuid              = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, body, date_part('epoch',created_at), date_part('epoch',updated_at) FROM message_table WHERE uuid=$1;"
+	queryUpdateMessage                 = "UPDATE message_table SET body=$2, updated_at=timezone('utc'::text, now()) WHERE uuid=$1 RETURNING uuid, body, date_part('epoch',updated_at);"
 
-	queryGetUserConversationForUser         = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, joined_at FROM user_conversation WHERE user_id=$1;"
-	queryGetUserConversationByUuid          = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, joined_at FROM user_conversation WHERE uuid=$1;"
-	queryGetUserConversationForConversation = "SELECT uc.id, uc.uuid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, uc.joined_at FROM user_conversation uc JOIN conversation c ON uc.conversation_id = c.id WHERE c.uuid=$1;"
+	queryGetUserConversationForUser         = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE user_id=$1;"
+	queryGetUserConversationByUuid          = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE uuid=$1;"
+	queryGetUserConversationForConversation = "SELECT uc.id, uc.uuid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at) FROM user_conversation uc JOIN conversation c ON uc.conversation_id = c.id WHERE c.uuid=$1;"
 	queryUserConversationUpdateLastAccess   = "UPDATE user_conversation SET last_access_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_access_uuid;"
 )
 
@@ -212,7 +212,7 @@ func (dbr *messagingDBRepository) GetUserConversationsForUser(id int64) ([]conve
 	ucs := []conversation.UserConversation{}
 	for rows.Next() {
 		uc := conversation.UserConversation{}
-		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.JoinedAt); err != nil {
+		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
 			logger.Error("error in getuserconversationsforuser function, scanning rows", err)
 			return nil, server_message.NewInternalError()
 		}
@@ -233,7 +233,7 @@ func (dbr *messagingDBRepository) GetUserConversationsForConversation(uuid strin
 	ucs := []conversation.UserConversation{}
 	for rows.Next() {
 		uc := conversation.UserConversation{}
-		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.JoinedAt); err != nil {
+		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
 			logger.Error("error in GetUserConversationForConversation function, scanning rows", err)
 			return nil, server_message.NewInternalError()
 		}
@@ -248,7 +248,7 @@ func (dbr *messagingDBRepository) GetUserConversationByUuid(uuid string) (*conve
 	dbclient := postgresql.GetSession()
 	row := dbclient.QueryRow(queryGetUserConversationByUuid, uuid)
 	uc := conversation.UserConversation{}
-	if err := row.Scan(&uc.Id, &uc.Uuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.JoinedAt); err != nil {
+	if err := row.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
 		logger.Error("error in GetUserConversationByUuid function", err)
 		return nil, server_message.NewInternalError()
 	}

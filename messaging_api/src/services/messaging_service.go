@@ -53,6 +53,12 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 	}
 	msg.AuthorId = user.Id
 
+	convo, response_msg := ms.GetConversationByUuid(msg.ConversationUuid)
+	if response_msg.GetStatus() != 200 {
+		return nil, response_msg
+	}
+	msg.ConversationId = convo.Id
+
 	uuid, err := ms.dbrepo.CreateMessage(msg)
 	if err != nil {
 		return nil, err
@@ -66,6 +72,13 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 		return nil, response_msg
 	}
 	userconvo.UserId = user.Id
+
+	convo, response_msg := ms.GetConversationByUuid(userconvo.ConversationUuid)
+	if response_msg.GetStatus() != 200 {
+		return nil, response_msg
+	}
+	userconvo.ConversationId = convo.Id
+
 	uuid, err := ms.dbrepo.CreateUserConversation(userconvo)
 	if err != nil {
 		return nil, err

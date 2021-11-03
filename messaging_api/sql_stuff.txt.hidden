@@ -1,0 +1,30 @@
+Conversation;
+ALTER TABLE tests.conversation ADD uuid uuid NOT NULL DEFAULT tests.uuid_generate_v4();
+ALTER TABLE tests.conversation ADD "type" int NOT NULL;
+ALTER TABLE tests.conversation ADD created_at timestamptz NOT NULL DEFAULT timezone('utc'::text, now());
+ALTER TABLE tests.conversation ADD last_message_uuid uuid NULL;
+ALTER TABLE tests.conversation ADD "name" varchar NULL;
+ALTER TABLE tests.conversation ADD description varchar NULL;
+ALTER TABLE tests.conversation ADD avatar_url varchar NULL;
+
+CREATE TABLE tests.user_conversation (
+	id bigserial NOT NULL,
+	uuid uuid NOT NULL DEFAULT tests.uuid_generate_v4(),
+	user_id bigint NOT NULL,
+	conversation_uuid uuid NOT NULL,
+	last_access_uuid uuid NULL,
+	joined_at timestamptz NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE tests.message_table (
+	id bigserial NOT NULL,
+	uuid uuid NOT NULL DEFAULT tests.uuid_generate_v4(),
+	author_uuid uuid NOT NULL,
+	body text NOT NULL,
+	author_id bigint NOT NULL,
+	created_at timestamptz NOT NULL DEFAULT timezone('utc'::text, now()),
+	updated_at timestamptz NULL,
+	conversation_uuid uuid NOT NULL
+);
+
+uuid default '00000000-0000-0000-0000-000000000000'::uuid
