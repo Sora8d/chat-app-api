@@ -16,7 +16,7 @@ import (
 
 var (
 	mess_test_service MessagingService
-	mockproto         = true
+	mockproto         = false
 )
 
 type mockprotoclient struct {

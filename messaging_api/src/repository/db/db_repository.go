@@ -37,6 +37,7 @@ type MessagingDBRepository interface {
 
 	GetConversationsByUser(string) ([]conversation.Conversation, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
+	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 
 	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)

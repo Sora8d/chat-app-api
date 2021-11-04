@@ -19,6 +19,7 @@ type MessagingService interface {
 	GetConversationsByUser(string) ([]conversation.Conversation, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
+	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
 	GetMessagesByAuthor(string) ([]message.Message, server_message.Svr_message)
 	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)
@@ -86,6 +87,8 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 	return uuid, server_message.NewCustomMessage(http.StatusOK, "user_conversation created")
 }
 
+//
+
 func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversation.Conversation, server_message.Svr_message) {
 	conversations, err := ms.dbrepo.GetConversationsByUser(user_uuid)
 	if err != nil {
@@ -107,6 +110,17 @@ func (ms *messagingService) UpdateConversationLastMsg(uuid string, last_msg stri
 	}
 	return result, server_message.NewCustomMessage(http.StatusOK, "conversation updatee retrieved")
 }
+
+func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
+	convo, err := ms.dbrepo.UpdateConversationInfo(uuid, conv_info)
+	if err != nil {
+		return nil, err
+	}
+	return convo, server_message.NewCustomMessage(http.StatusOK, "conversation info updated")
+
+}
+
+//
 
 func (ms *messagingService) GetMessageByUuid(uuid string) (*message.Message, server_message.Svr_message) {
 	message, err := ms.dbrepo.GetMessageByUuid(uuid)
@@ -135,13 +149,15 @@ func (ms *messagingService) GetMessagesByConversation(uuid string) ([]message.Me
 	return messages, server_message.NewCustomMessage(http.StatusOK, "messages retrieved")
 }
 func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
-	messages, err := ms.dbrepo.UpdateMessage(uuid, text)
+	message, err := ms.dbrepo.UpdateMessage(uuid, text)
 	if err != nil {
 		return nil, err
 	}
-	return messages, server_message.NewCustomMessage(http.StatusOK, "messages retrieved")
+	return message, server_message.NewCustomMessage(http.StatusOK, "message updated")
 
 }
+
+//
 
 func (ms *messagingService) GetUserConversationsForUser(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
 	user, msg := ms.proto_users.GetUser(uuid)
