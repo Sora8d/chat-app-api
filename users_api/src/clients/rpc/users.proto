@@ -2,6 +2,8 @@ syntax= "proto3";
 
 option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc";
 
+package flydev_chat_app_users;
+
 service UsersProtoInterface{
 
     rpc GetUserByUuid(Uuid) returns (UserMsgResponse) {}
@@ -15,7 +17,7 @@ service UsersProtoInterface{
     rpc UpdateUser(UpdateUserRequest) returns (UserProfileMsgResponse) {}
 
     rpc UpdateActive(UpdateActiveRequest) returns (Svr_msg) {}
-
+//Este user en user login voy a reemplazarlo por un login_form que tenga login_user y login_password como atributos.
     rpc UserLogin(User) returns (UserMsgResponse) {}
 }
 

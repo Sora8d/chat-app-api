@@ -24,6 +24,7 @@ type UsersProtoInterfaceClient interface {
 	CreateUser(ctx context.Context, in *RegisterUser, opts ...grpc.CallOption) (*SvrMsg, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserProfileMsgResponse, error)
 	UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*SvrMsg, error)
+	//Este user en user login voy a reemplazarlo por un login_form que tenga login_user y login_password como atributos.
 	UserLogin(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserMsgResponse, error)
 }
 
@@ -37,7 +38,7 @@ func NewUsersProtoInterfaceClient(cc grpc.ClientConnInterface) UsersProtoInterfa
 
 func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error) {
 	out := new(UserMsgResponse)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/GetUserByUuid", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid,
 
 func (c *usersProtoInterfaceClient) GetUserProfileByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserProfileMsgResponse, error) {
 	out := new(UserProfileMsgResponse)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/GetUserProfileByUuid", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/GetUserProfileByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (c *usersProtoInterfaceClient) GetUserProfileByUuid(ctx context.Context, in
 
 func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*SvrMsg, error) {
 	out := new(SvrMsg)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/DeleteUserByUuid", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/DeleteUserByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (c *usersProtoInterfaceClient) DeleteUserByUuid(ctx context.Context, in *Uu
 
 func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *RegisterUser, opts ...grpc.CallOption) (*SvrMsg, error) {
 	out := new(SvrMsg)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/CreateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func (c *usersProtoInterfaceClient) CreateUser(ctx context.Context, in *Register
 
 func (c *usersProtoInterfaceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserProfileMsgResponse, error) {
 	out := new(UserProfileMsgResponse)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UpdateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (c *usersProtoInterfaceClient) UpdateUser(ctx context.Context, in *UpdateUs
 
 func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *UpdateActiveRequest, opts ...grpc.CallOption) (*SvrMsg, error) {
 	out := new(SvrMsg)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UpdateActive", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/UpdateActive", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (c *usersProtoInterfaceClient) UpdateActive(ctx context.Context, in *Update
 
 func (c *usersProtoInterfaceClient) UserLogin(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserMsgResponse, error) {
 	out := new(UserMsgResponse)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/UserLogin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/UserLogin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +109,7 @@ type UsersProtoInterfaceServer interface {
 	CreateUser(context.Context, *RegisterUser) (*SvrMsg, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UserProfileMsgResponse, error)
 	UpdateActive(context.Context, *UpdateActiveRequest) (*SvrMsg, error)
+	//Este user en user login voy a reemplazarlo por un login_form que tenga login_user y login_password como atributos.
 	UserLogin(context.Context, *User) (*UserMsgResponse, error)
 	mustEmbedUnimplementedUsersProtoInterfaceServer()
 }
@@ -160,7 +162,7 @@ func _UsersProtoInterface_GetUserByUuid_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/GetUserByUuid",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).GetUserByUuid(ctx, req.(*Uuid))
@@ -178,7 +180,7 @@ func _UsersProtoInterface_GetUserProfileByUuid_Handler(srv interface{}, ctx cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/GetUserProfileByUuid",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/GetUserProfileByUuid",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).GetUserProfileByUuid(ctx, req.(*Uuid))
@@ -196,7 +198,7 @@ func _UsersProtoInterface_DeleteUserByUuid_Handler(srv interface{}, ctx context.
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/DeleteUserByUuid",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/DeleteUserByUuid",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).DeleteUserByUuid(ctx, req.(*Uuid))
@@ -214,7 +216,7 @@ func _UsersProtoInterface_CreateUser_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/CreateUser",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).CreateUser(ctx, req.(*RegisterUser))
@@ -232,7 +234,7 @@ func _UsersProtoInterface_UpdateUser_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/UpdateUser",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/UpdateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
@@ -250,7 +252,7 @@ func _UsersProtoInterface_UpdateActive_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/UpdateActive",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/UpdateActive",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).UpdateActive(ctx, req.(*UpdateActiveRequest))
@@ -268,7 +270,7 @@ func _UsersProtoInterface_UserLogin_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/UserLogin",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/UserLogin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).UserLogin(ctx, req.(*User))
@@ -280,7 +282,7 @@ func _UsersProtoInterface_UserLogin_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UsersProtoInterface_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "UsersProtoInterface",
+	ServiceName: "flydev_chat_app_users.UsersProtoInterface",
 	HandlerType: (*UsersProtoInterfaceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
