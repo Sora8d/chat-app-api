@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	queryGetUserByUuid      = "SELECT id, uuid, login_user FROM user_table WHERE uuid=$1;"
+	queryGetUserByUuid      = "SELECT id, uuid FROM user_table WHERE uuid=$1;"
 	queryGetUserByLogin     = "SELECT id, uuid, login_user FROM user_table WHERE login_user=$1 and login_password=$2;"
 	queryGetUserProfileById = "SELECT up.id, up.user_id, up.active, up.phone, up.first_name, up.last_name, up.username, up.avatar_url, up.description, to_char(up.created_at, 'YYYY-MM-DD HH24:MI:SS TZ') FROM user_profile up JOIN user_table ut on up.user_id = ut.id WHERE ut.uuid=$1;"
 	queryDeleteUserByUuid   = "DELETE FROM user_table WHERE uuid=$1;"

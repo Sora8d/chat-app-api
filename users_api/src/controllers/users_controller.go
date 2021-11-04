@@ -39,7 +39,7 @@ func (us userServer) UserLogin(ctx context.Context, u *pb.User) (*pb.UserMsgResp
 func (us userServer) GetUserByUuid(ctx context.Context, uuid *pb.Uuid) (*pb.UserMsgResponse, error) {
 	//This is just part of the oauth mock
 	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
+	if ok && md.Get("user_uuid") != nil && md.Get("admin") != nil {
 		logger.Info(fmt.Sprintf("user: %s, permissions: %v", md.Get("user_uuid")[0], md.Get("admin")[0]))
 	}
 
