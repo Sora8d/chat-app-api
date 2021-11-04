@@ -31,7 +31,7 @@ func NewUsersProtoInterfaceClient(cc grpc.ClientConnInterface) UsersProtoInterfa
 
 func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error) {
 	out := new(UserMsgResponse)
-	err := c.cc.Invoke(ctx, "/UsersProtoInterface/GetUserByUuid", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func _UsersProtoInterface_GetUserByUuid_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsersProtoInterface/GetUserByUuid",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).GetUserByUuid(ctx, req.(*Uuid))
@@ -88,7 +88,7 @@ func _UsersProtoInterface_GetUserByUuid_Handler(srv interface{}, ctx context.Con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UsersProtoInterface_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "UsersProtoInterface",
+	ServiceName: "flydev_chat_app_users.UsersProtoInterface",
 	HandlerType: (*UsersProtoInterfaceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

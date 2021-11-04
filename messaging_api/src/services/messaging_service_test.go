@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/flydevs/chat-app-api/common/server_message"
@@ -24,13 +25,13 @@ type mockprotoclient struct {
 
 func (mpc mockprotoclient) GetUser(mockuuid string) (*users.User, server_message.Svr_message) {
 	switch mockuuid {
-	case "123e4568-e89b-12d3-a456-426655440000":
+	case test2mock:
 		mock_user := users.User{
 			Uuid: mockuuid,
 			Id:   2,
 		}
 		return &mock_user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
-	case "123e4567-e89b-12d3-a456-426655440000":
+	case test1mock:
 		mock_user := users.User{
 			Uuid: mockuuid,
 			Id:   1,
@@ -62,6 +63,10 @@ var (
 		},
 	}
 )
+
+func TestMain(m *testing.M) {
+	os.Exit(m.Run())
+}
 
 func TestCreateGetConversation(t *testing.T) {
 	defer db_ctrl.DBClient.Flush()
@@ -95,15 +100,16 @@ func TestCreateGetConversation(t *testing.T) {
 }
 
 var (
+	test1mock       = "a82df6a1-ae8b-4cb6-9d09-07c6f02be915"
+	test2mock       = "49b830e1-7eb3-41b6-ac76-c3c1f76d3150"
 	CreateMessageC1 = conversation.Conversation{
 		Type: 1,
 	}
 	CreateMessageM1 = message.Message{
 		Text:       "test1",
-		AuthorUuid: "123e4567-e89b-12d3-a456-426655440000",
+		AuthorUuid: test1mock,
 	}
 	test1text = "test1"
-	test1mock = "123e4567-e89b-12d3-a456-426655440000"
 )
 
 func TestCreateGetMessage(t *testing.T) {
@@ -124,7 +130,7 @@ func TestCreateGetMessage(t *testing.T) {
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
 	}
-	if result.Uuid == "" || result.AuthorId != 1 || result.Text != test1text || result.AuthorUuid != test1mock {
+	if result.Uuid == "" || result.Text != test1text {
 		t.Error(fmt.Sprintf("received data is not right, %+v", result))
 		return
 	}
@@ -135,9 +141,9 @@ var (
 		Type: 1,
 	}
 	CreateUserConversationUC1 = conversation.UserConversation{
-		UserUuid: "123e4567-e89b-12d3-a456-426655440000",
+		UserUuid: test1mock,
 	}
-	useruuidmock = "123e4567-e89b-12d3-a456-426655440000"
+	useruuidmock = test1mock
 )
 
 func TestCreateGetUserConversation(t *testing.T) {
@@ -160,7 +166,7 @@ func TestCreateGetUserConversation(t *testing.T) {
 		t.Error(response_msg)
 	}
 
-	if result.Uuid == "" || result.UserId != 1 || result.UserUuid != useruuidmock {
+	if result.Uuid == "" {
 		t.Error(fmt.Sprintf("received data is not right, %+v", result))
 		return
 	}
@@ -179,7 +185,7 @@ var (
 		},
 	}
 	GetConvsByUserUC = conversation.UserConversation{
-		UserUuid: "123e4567-e89b-12d3-a456-426655440000",
+		UserUuid: test1mock,
 	}
 )
 
@@ -232,17 +238,16 @@ var (
 	}
 	GetMsgM1 = message.Message{
 		Text:       "test1",
-		AuthorUuid: "123e4567-e89b-12d3-a456-426655440000",
+		AuthorUuid: test1mock,
 	}
 	GetMsgM2 = message.Message{
 		Text:       "test2",
-		AuthorUuid: "123e4567-e89b-12d3-a456-426655440000",
+		AuthorUuid: test1mock,
 	}
 	GetMsgM3 = message.Message{
 		Text:       "test3",
-		AuthorUuid: "123e4568-e89b-12d3-a456-426655440000",
+		AuthorUuid: test2mock,
 	}
-	test2mock = "123e4568-e89b-12d3-a456-426655440000"
 )
 
 func TestGetMessagesByAuthor(t *testing.T) {
@@ -279,7 +284,7 @@ func TestGetMessagesByAuthor(t *testing.T) {
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
 	}
-	if len(result) != 2 || result[0].AuthorId != 1 || result[1].AuthorId != 1 || result[0].Text != "test1" || result[1].Text != "test2" || result[0].ConversationId == result[1].ConversationId {
+	if len(result) != 2 || result[0].Text != "test1" || result[1].Text != "test2" || result[0].ConversationId == result[1].ConversationId {
 		t.Error(fmt.Sprintf("there are differences in the results and the expected values: %+v", result))
 	}
 
@@ -287,7 +292,7 @@ func TestGetMessagesByAuthor(t *testing.T) {
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
 	}
-	if len(result) != 1 || result[0].AuthorId != 2 || result[0].Text != "test3" {
+	if len(result) != 1 || result[0].Text != "test3" {
 		t.Error(fmt.Sprintf("there are differences in the results and the expected values: %+v", result))
 	}
 }
@@ -326,7 +331,7 @@ func TestGetMessagesByConversation(t *testing.T) {
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
 	}
-	if len(result) != 2 || result[0].AuthorId != 1 || result[1].AuthorId != 2 || result[0].Text != "test1" || result[1].Text != "test3" || result[0].ConversationId != result[1].ConversationId {
+	if len(result) != 2 || result[0].Text != "test1" || result[1].Text != "test3" || result[0].ConversationId != result[1].ConversationId {
 		t.Error(fmt.Sprintf("there are differences in the results and the expected values: %+v", result))
 	}
 
@@ -334,7 +339,7 @@ func TestGetMessagesByConversation(t *testing.T) {
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
 	}
-	if len(result) != 1 || result[0].AuthorId != 1 || result[0].Text != "test2" {
+	if len(result) != 1 || result[0].Text != "test2" {
 		t.Error(fmt.Sprintf("there are differences in the results and the expected values: %+v", result))
 	}
 }
@@ -352,13 +357,13 @@ var (
 		},
 	}
 	GetUCUC1 = conversation.UserConversation{
-		UserUuid: "123e4567-e89b-12d3-a456-426655440000",
+		UserUuid: test1mock,
 	}
 	GetUCUC2 = conversation.UserConversation{
-		UserUuid: "123e4567-e89b-12d3-a456-426655440000",
+		UserUuid: test1mock,
 	}
 	GetUCUC3 = conversation.UserConversation{
-		UserUuid: "123e4568-e89b-12d3-a456-426655440000",
+		UserUuid: test2mock,
 	}
 )
 
@@ -406,8 +411,8 @@ func TestGetUserConversationByUser(t *testing.T) {
 		t.Error(response_msg)
 	}
 
-	if len(result) != 1 || result[0].ConversationUuid != uuid2.Uuid || result[0].UserId != 2 {
-		t.Error(fmt.Sprintf("there are differences in the results and the expected values: %+v", result))
+	if len(result) != 1 || result[0].ConversationUuid != uuid1.Uuid {
+		t.Error(fmt.Sprintf("%+v: there are differences in the results and the expected values: %+v", uuid2, result))
 	}
 }
 
@@ -455,7 +460,7 @@ func TestGetUserConversationByConversation(t *testing.T) {
 		t.Error(response_msg)
 	}
 
-	if len(result) != 1 || result[0].ConversationUuid != uuid2.Uuid || result[0].UserId != 1 {
+	if len(result) != 1 || result[0].ConversationUuid != uuid2.Uuid {
 		t.Error(fmt.Sprintf("there are differences in the results and the expected values: %+v", result))
 	}
 }
@@ -466,7 +471,7 @@ var (
 	}
 	UpdateConvoM1 = message.Message{
 		Text:       "test1",
-		AuthorUuid: "123e4567-e89b-12d3-a456-426655440000",
+		AuthorUuid: test1mock,
 	}
 )
 
@@ -535,7 +540,7 @@ func TestUpdateMessage(t *testing.T) {
 
 var (
 	UpdateUC1 = conversation.UserConversation{
-		UserUuid: "123e4567-e89b-12d3-a456-426655440000",
+		UserUuid: test1mock,
 	}
 )
 
@@ -567,5 +572,55 @@ func TestUserConversationLastAccess(t *testing.T) {
 
 	if result.LastAccessUuid != uuidmsg.Uuid {
 		t.Error(result)
+	}
+}
+
+var (
+	change1Info = conversation.ConversationInfo{
+		Name:        "test1",
+		Description: "desct1",
+		AvatarUrl:   "avatar.jpg",
+	}
+	change2Info = conversation.ConversationInfo{
+		Name:        "test2",
+		Description: "desct2",
+		AvatarUrl:   "icon.jpg",
+	}
+)
+
+func TestConversationUpdateInfo(t *testing.T) {
+	defer db_ctrl.DBClient.Flush()
+
+	uuid, response_msg := mess_test_service.CreateConversation(GetUCC1)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+	}
+
+	result, response_msg := mess_test_service.UpdateConversationInfo(uuid.Uuid, change1Info)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+	}
+
+	convo, response_msg := mess_test_service.GetConversationByUuid(result.Uuid)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+	}
+
+	if convo.Uuid != uuid.Uuid || convo.ConversationInfo != change1Info {
+		t.Error(fmt.Sprintf("something differs %+v", convo))
+	}
+
+	result, response_msg = mess_test_service.UpdateConversationInfo(uuid.Uuid, change2Info)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+	}
+
+	convo, response_msg = mess_test_service.GetConversationByUuid(result.Uuid)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+	}
+
+	if convo.Uuid != uuid.Uuid || convo.ConversationInfo != change2Info {
+		t.Error(fmt.Sprintf("something differs %+v", convo))
 	}
 }

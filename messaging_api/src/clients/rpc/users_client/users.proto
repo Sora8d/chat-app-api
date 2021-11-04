@@ -2,6 +2,9 @@ syntax= "proto3";
 
 option go_package= "github.com/flydevs/chat-app-api/messaging-api/src/clients/rpc/users_client";
 
+package flydev_chat_app_users;
+
+
 service UsersProtoInterface{
 
     rpc GetUserByUuid(Uuid) returns (UserMsgResponse) {}

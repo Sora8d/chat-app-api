@@ -2,6 +2,7 @@ package users_client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/flydevs/chat-app-api/common/logger"
 	"github.com/flydevs/chat-app-api/common/server_message"
@@ -12,18 +13,6 @@ import (
 )
 
 var u_proto userProtoClient
-var conn *grpc.ClientConn
-
-func init() {
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	c, err := grpc.Dial(config.Config["USERS_ADDRESS"], opts...)
-	if err != nil {
-		panic(err)
-	}
-
-	u_proto.client = pb.NewUsersProtoInterfaceClient(conn)
-	conn = c
-}
 
 func GetUsersProtoClient() UserProtoClientRepository {
 	return &u_proto
@@ -36,9 +25,23 @@ type UserProtoClientRepository interface {
 
 type userProtoClient struct {
 	client pb.UsersProtoInterfaceClient
+	conn   *grpc.ClientConn
+}
+
+func (upc *userProtoClient) Setup() {
+	logger.Info(fmt.Sprintf("connecting to users_repository with address:%s", config.Config["USERS_ADDRESS"]))
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	c, err := grpc.Dial(config.Config["USERS_ADDRESS"], opts...)
+	if err != nil {
+		panic(err)
+	}
+
+	upc.client = pb.NewUsersProtoInterfaceClient(c)
+	upc.conn = c
 }
 
 func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Svr_message) {
+	upc.Setup()
 	pbuuid := pb.Uuid{Uuid: uuid}
 	ctx := context.Background()
 	user_msg_response, err := upc.client.GetUserByUuid(ctx, &pbuuid)
@@ -51,6 +54,7 @@ func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Sv
 		return nil, msg
 	}
 	user := poblateUserfromProto(user_msg_response.User)
+	upc.conn.Close()
 	return &user, msg
 }
 

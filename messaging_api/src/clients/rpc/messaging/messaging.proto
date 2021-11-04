@@ -2,6 +2,8 @@ syntax= "proto3";
 
 option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/messaging";
 
+package flydev_chat_app_messaging;
+
 service MessagingProtoInterface{
     rpc CreateConversation(Conversation) returns (UuidMsg) {}
     rpc GetConversation(Uuid) returns (ConvMsgResponse) {}
