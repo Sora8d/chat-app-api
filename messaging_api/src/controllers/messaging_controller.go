@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"context"
+
+	"github.com/flydevs/chat-app-api/common/logger"
 	"github.com/flydevs/chat-app-api/common/server_message"
 	pb "github.com/flydevs/chat-app-api/messaging-api/src/clients/rpc/messaging"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
@@ -14,23 +17,12 @@ type messagingController struct {
 	svc services.MessagingService
 }
 
-type MessagingController interface {
-	CreateConversation(*pb.Conversation) (*pb.UuidMsg, error)
-	CreateMessage(*pb.Message) (*pb.UuidMsg, error)
-	CreateUserConversation(*pb.UserConversation) (*pb.UuidMsg, error)
-	//Later this will be done with the JWT information instead of a provided uuid.
-	GetConversationsByUser(*pb.Uuid) (*pb.ArrayConversationResponse, error)
-	GetMessagesByConversation(*pb.MessageRequest) (*pb.ArrayMessageResponse, error)
-	//
-	UpdateConversationInfo(*pb.Conversation) (*pb.UpdateConversationResponse, error)
-	UpdateMessage(*pb.Message) (*pb.MessageMsgResponse, error)
+func GetMessagingController(messaging_service services.MessagingService) messagingController {
+	return messagingController{svc: messaging_service}
 }
 
-func GetMessagingController(messaging_service services.MessagingService) MessagingController {
-	return &messagingController{svc: messaging_service}
-}
-
-func (mc *messagingController) CreateConversation(pbc *pb.Conversation) (*pb.UuidMsg, error) {
+func (mc messagingController) CreateConversation(ctx context.Context, pbc *pb.Conversation) (*pb.UuidMsg, error) {
+	logger.Info("accesed this")
 	var new_conversation conversation.Conversation
 	new_conversation.Poblate(false, pbc)
 	result_uuid, resp_msg := mc.svc.CreateConversation(new_conversation)
@@ -44,7 +36,7 @@ func (mc *messagingController) CreateConversation(pbc *pb.Conversation) (*pb.Uui
 	return &Pb_response, nil
 }
 
-func (mc *messagingController) CreateMessage(pbm *pb.Message) (*pb.UuidMsg, error) {
+func (mc messagingController) CreateMessage(ctx context.Context, pbm *pb.Message) (*pb.UuidMsg, error) {
 	var new_message message.Message
 	new_message.Poblate(false, pbm)
 	result_uuid, resp_msg := mc.svc.CreateMessage(new_message)
@@ -59,7 +51,7 @@ func (mc *messagingController) CreateMessage(pbm *pb.Message) (*pb.UuidMsg, erro
 	return &Pb_response, nil
 }
 
-func (mc *messagingController) CreateUserConversation(pbuc *pb.UserConversation) (*pb.UuidMsg, error) {
+func (mc messagingController) CreateUserConversation(ctx context.Context, pbuc *pb.UserConversation) (*pb.UuidMsg, error) {
 	var new_user_conversation conversation.UserConversation
 	new_user_conversation.Poblate(false, pbuc)
 	result_uuid, resp_msg := mc.svc.CreateUserConversation(new_user_conversation)
@@ -76,7 +68,7 @@ func (mc *messagingController) CreateUserConversation(pbuc *pb.UserConversation)
 
 //
 
-func (mc *messagingController) GetConversationsByUser(pbuuid *pb.Uuid) (*pb.ArrayConversationResponse, error) {
+func (mc messagingController) GetConversationsByUser(ctx context.Context, pbuuid *pb.Uuid) (*pb.ArrayConversationResponse, error) {
 	result, response_msg := mc.svc.GetConversationsByUser(pbuuid.Uuid)
 	var Pb_response pb.ArrayConversationResponse
 	Pb_response.Msg = poblateMsg(response_msg)
@@ -94,8 +86,8 @@ func (mc *messagingController) GetConversationsByUser(pbuuid *pb.Uuid) (*pb.Arra
 
 //
 
-func (mc *messagingController) GetMessagesByConversation(pbuuid *pb.MessageRequest) (*pb.ArrayMessageResponse, error) {
-	result, response_msg := mc.svc.GetMessagesByConversation(pbuuid.UserUuid.Uuid, pbuuid.ConversationUuid.Uuid)
+func (mc messagingController) GetMessagesByConversation(ctx context.Context, pbuuid *pb.MessageRequest) (*pb.ArrayMessageResponse, error) {
+	result, response_msg := mc.svc.GetMessagesByConversation(pbuuid.UcUuid.Uuid, pbuuid.ConversationUuid.Uuid)
 	var Pb_response pb.ArrayMessageResponse
 	Pb_response.Msg = poblateMsg(response_msg)
 	if result != nil {
@@ -110,7 +102,7 @@ func (mc *messagingController) GetMessagesByConversation(pbuuid *pb.MessageReque
 	return &Pb_response, nil
 }
 
-func (mc *messagingController) UpdateConversationInfo(pb_convo *pb.Conversation) (*pb.UpdateConversationResponse, error) {
+func (mc messagingController) UpdateConversationInfo(ctx context.Context, pb_convo *pb.Conversation) (*pb.UpdateConversationResponse, error) {
 	var request_convo conversation.Conversation
 	request_convo.Poblate(false, pb_convo)
 	result, response_msg := mc.svc.UpdateConversationInfo(request_convo.Uuid, request_convo.ConversationInfo)
@@ -124,7 +116,7 @@ func (mc *messagingController) UpdateConversationInfo(pb_convo *pb.Conversation)
 	return &Pb_response, nil
 }
 
-func (mc *messagingController) UpdateMessage(pb_message *pb.Message) (*pb.MessageMsgResponse, error) {
+func (mc messagingController) UpdateMessage(ctx context.Context, pb_message *pb.Message) (*pb.MessageMsgResponse, error) {
 	result, response_msg := mc.svc.UpdateMessage(pb_message.Uuid.Uuid, pb_message.Text)
 	var Pb_response pb.MessageMsgResponse
 	Pb_response.Msg = poblateMsg(response_msg)

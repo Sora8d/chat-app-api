@@ -20,21 +20,6 @@ package flydev_chat_app_messaging;
         rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
         
         rpc CreateUserConversation(UserConversation) returns (UuidMsg) {}
-        /*
-        Already disposed of
-        rpc GetConversation(Uuid) returns (GetConversationResponse) {} I dont think this one is needed either
-
-        rpc UpdateConversationLastMsg(UuidandMessageUuid) returns (ConvMsgResponse) {} //happens automatically afer every CreateMessage
-        rpc GetMessage(Uuid) returns (MessageMsgResponse) {} //Not needed
-        rpc GetMessagesByAuthor(Uuid) returns (ArrayMessageResponse) {} //Not needed
-     
-        Now this all occurs when fetching conversations
-        rpc GetUserConversation(Uuid) returns (UCMsgResponse) {} //Not needed
-        rpc GetUserConversationsForUser(Uuid) returns (ArrayUserConversationResponse) {} //Already happens in GetConversationsByUser
-        rpc GetUserConversationsForConversation(Uuid) returns (ArrayUserConversationResponse) {} //blackbox, this comes with Get Conversation
-    
-        rpc UpdateUserConversation(UuidandMessageUuid) returns (UCMsgResponse) {} //This one now happens after every GetMessages
-        */
  }
      //  mensaje - post- productor de eventos- llama a kafka - 
 
@@ -43,7 +28,7 @@ package flydev_chat_app_messaging;
      Uuid uuid =1;
      int32 type =2;
      float created_at= 3;
-     string last_msg_uuid= 4;
+     Uuid last_msg_uuid= 4;
      string name =5;
     string description =6;
     string avatar_url=7;
@@ -90,7 +75,7 @@ message Message{
 }
 
 message MessageRequest{
-    Uuid user_uuid =1;
+    Uuid uc_uuid =1;
     Uuid conversation_uuid =2;
 }
 

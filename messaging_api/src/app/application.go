@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/flydevs/chat-app-api/common/logger"
 	pb "github.com/flydevs/chat-app-api/messaging-api/src/clients/rpc/messaging"
 	"github.com/flydevs/chat-app-api/messaging-api/src/config"
 	"github.com/flydevs/chat-app-api/messaging-api/src/controllers"
@@ -14,16 +15,17 @@ import (
 )
 
 var (
-	usersService services.MessagingService
-	accroles     = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
+	messagingService services.MessagingService
+
+//	accroles         = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
 )
 
 // usersOauthService
 
 func StartApp() {
-	usersService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient())
-	userServer := controllers.GetMessagingController(usersService)
-
+	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient())
+	messagingServer := controllers.GetMessagingController(messagingService)
+	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
 	conn, err := net.Listen("tcp", config.Config["PORT"])
 	fmt.Sprintln(conn)
 	if err != nil {
@@ -31,6 +33,6 @@ func StartApp() {
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterMessagingProtoInterfaceServer(grpcServer, userServer)
+	pb.RegisterMessagingProtoInterfaceServer(grpcServer, messagingServer)
 	grpcServer.Serve(conn)
 }

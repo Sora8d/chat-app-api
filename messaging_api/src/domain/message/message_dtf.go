@@ -13,7 +13,9 @@ func (ms *Message) Poblate(direction_out bool, mpb *pb.Message) {
 		mpb.CreatedAt = ms.CreatedAt
 		mpb.UpdatedAt = ms.UpdatedAt
 	} else {
-		ms.Uuid = mpb.Uuid.Uuid
+		if mpb.Uuid != nil {
+			ms.Uuid = mpb.Uuid.Uuid
+		}
 		ms.AuthorUuid = mpb.AuthorUuid.Uuid
 		ms.ConversationUuid = mpb.ConversationUuid.Uuid
 		ms.Text = mpb.Text
