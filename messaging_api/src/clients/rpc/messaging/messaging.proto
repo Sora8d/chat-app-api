@@ -4,27 +4,41 @@ option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/me
 
 package flydev_chat_app_messaging;
 
-service MessagingProtoInterface{
-    rpc CreateConversation(Conversation) returns (UuidMsg) {}
-    rpc GetConversation(Uuid) returns (ConvMsgResponse) {}
-    rpc GetConversationsByUser(Uuid) returns (ArrayConversationResponse) {}
-    rpc UpdateConversationLastMsg(UuidandMessageUuid) returns (ConvMsgResponse) {}
-    rpc UpdateConversationInfo(Conversation) returns (ConvMsgResponse) {}
+    service MessagingProtoInterface{
+        rpc CreateConversation(Conversation) returns (UuidMsg) {}
+        
+        //Changed, now instead of returning conversations alone it returns an object with a conversation an its participants inside.
+        //Later should be fetched directly through JWT info.
+        rpc GetConversationsByUser(Uuid) returns (ArrayConversationResponse) {}
 
-    rpc CreateMessage(Message) returns (UuidMsg) {}
-    rpc GetMessage(Uuid) returns (MessageMsgResponse) {}
-    rpc GetMessagesByAuthor(Uuid) returns (ArrayMessageResponse) {}
-    rpc GetMessagesByConversation(Uuid) returns (ArrayMessageResponse) {}
-    rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
+        rpc UpdateConversationInfo(Conversation) returns (UpdateConversationResponse) {}
+        
+        
+        rpc CreateMessage(Message) returns (UuidMsg) {}
+        //Later change userUuid to use JWT info.
+        rpc GetMessagesByConversation(MessageRequest) returns (ArrayMessageResponse) {}
+        rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
+        
+        rpc CreateUserConversation(UserConversation) returns (UuidMsg) {}
+        /*
+        Already disposed of
+        rpc GetConversation(Uuid) returns (GetConversationResponse) {} I dont think this one is needed either
 
-    rpc CreateUserConversation(UserConversation) returns (UuidMsg) {}
-    rpc GetUserConversation(Uuid) returns (UCMsgResponse) {}
-    rpc GetUserConversationsForUser(Uuid) returns (ArrayUserConversationResponse) {}
-    rpc GetUserConversationsForConversation(Uuid) returns (ArrayUserConversationResponse) {}
-    rpc UpdateUserConversation(UuidandMessageUuid) returns (UCMsgResponse) {}
+        rpc UpdateConversationLastMsg(UuidandMessageUuid) returns (ConvMsgResponse) {} //happens automatically afer every CreateMessage
+        rpc GetMessage(Uuid) returns (MessageMsgResponse) {} //Not needed
+        rpc GetMessagesByAuthor(Uuid) returns (ArrayMessageResponse) {} //Not needed
+     
+        Now this all occurs when fetching conversations
+        rpc GetUserConversation(Uuid) returns (UCMsgResponse) {} //Not needed
+        rpc GetUserConversationsForUser(Uuid) returns (ArrayUserConversationResponse) {} //Already happens in GetConversationsByUser
+        rpc GetUserConversationsForConversation(Uuid) returns (ArrayUserConversationResponse) {} //blackbox, this comes with Get Conversation
+    
+        rpc UpdateUserConversation(UuidandMessageUuid) returns (UCMsgResponse) {} //This one now happens after every GetMessages
+        */
  }
+     //  mensaje - post- productor de eventos- llama a kafka - 
 
- 
+ // Conversations-------
  message Conversation{
      Uuid uuid =1;
      int32 type =2;
@@ -34,11 +48,38 @@ service MessagingProtoInterface{
     string description =6;
     string avatar_url=7;
 }
-message ArrayConversationResponse{
-    repeated Conversation conversation = 1;
+
+message UserConversation{
+    Uuid uuid =1;
+    Uuid user_uuid =2;
+    Uuid conversation_uuid=3;
+    Uuid last_access_uuid = 4;
+    float created_at =5;
+}
+
+message ConversationAndParticipants{
+    Conversation conversation =1;
+    UserConversation user_conversation =2;
+    repeated UserConversation participants =3;
+}
+
+message UpdateConversationResponse{
+    Conversation conversation =1;
+    Svr_msg msg=2;
+}
+
+message GetConversationResponse{
+    ConversationAndParticipants conversation =1;
     Svr_msg msg =2;
 }
 
+message ArrayConversationResponse{
+    repeated ConversationAndParticipants conversations = 1;
+    Svr_msg msg =2;
+}
+
+// ----------
+// Messages
 message Message{
     Uuid uuid =1;
     Uuid conversation_uuid =2;
@@ -46,6 +87,25 @@ message Message{
     string text=4;
     float created_at=5;
     float updated_at=6;
+}
+
+message MessageRequest{
+    Uuid user_uuid =1;
+    Uuid conversation_uuid =2;
+}
+
+message MessageMsgResponse{
+    Message message =1;
+    Svr_msg msg=2;
+}
+message ArrayMessageResponse{
+    repeated Message message = 1;
+    Svr_msg msg=2;
+}
+//----
+//other
+message Uuid {
+    string uuid =1;
 }
 
 message Svr_msg{
@@ -57,44 +117,6 @@ message UuidMsg{
     Uuid uuid =1;
     Svr_msg msg=2;
 }
-
-message ConvMsgResponse{
-    Conversation convo =1;
-    Svr_msg msg =2;
-}
-
-message UserConversation{
-    Uuid uuid =1;
-    Uuid user_uuid =2;
-    Uuid conversation_uuid=3;
-    Uuid last_access_uuid = 4;
-    float created_at =5;
-}
-message UCMsgResponse{
-    UserConversation user_conversation =1;
-    Svr_msg msg =2;
-}
-
-message ArrayUserConversationResponse{
-    repeated UserConversation user_conversation =1;
-    Svr_msg msg=2;
-}
-
-message MessageMsgResponse{
-    Message message =1;
-    Svr_msg msg=2;
-}
-
-message ArrayMessageResponse{
-    repeated Message message = 1;
-    Svr_msg msg=2;
-}
-
-
-message Uuid {
-    string uuid =1;
-}
-
 message UuidandMessageUuid{
     Uuid og_entity =1;
     Uuid message =2;

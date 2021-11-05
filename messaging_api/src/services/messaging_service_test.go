@@ -50,6 +50,15 @@ func init() {
 	}
 }
 
+func TestMain(m *testing.M) {
+	os.Exit(m.Run())
+}
+
+var (
+	test1mock = "f812a359-20d4-41b2-a841-2cc003a14594"
+	test2mock = "0bf8c42d-3356-44fa-abd5-fb3fa7fa357b"
+)
+
 var (
 	CreateConversationC1 = conversation.Conversation{
 		Type: 1,
@@ -62,18 +71,23 @@ var (
 			AvatarUrl:   "test1.jpg",
 		},
 	}
+	UC1 = conversation.UserConversation{
+		UserUuid: test1mock,
+	}
+	CreateMessageM1 = message.Message{
+		Text:       "test1",
+		AuthorUuid: test1mock,
+	}
+	test1text = "test1"
 )
 
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
-}
-
-func TestCreateGetConversation(t *testing.T) {
+func TestCreateGetConversationInternal(t *testing.T) {
 	defer db_ctrl.DBClient.Flush()
 	test1, msg := mess_test_service.CreateConversation(CreateConversationC1)
 	if msg.GetStatus() != 200 {
 		t.Error(msg)
 	}
+
 	result1, msg := mess_test_service.GetConversationByUuid(test1.Uuid)
 	if msg.GetStatus() != 200 {
 		t.Error(msg)
@@ -99,53 +113,245 @@ func TestCreateGetConversation(t *testing.T) {
 	}
 }
 
-var (
-	test1mock       = "a82df6a1-ae8b-4cb6-9d09-07c6f02be915"
-	test2mock       = "49b830e1-7eb3-41b6-ac76-c3c1f76d3150"
-	CreateMessageC1 = conversation.Conversation{
-		Type: 1,
+func TestCreateGetConversationExternal(t *testing.T) {
+	defer db_ctrl.DBClient.Flush()
+	test1, msg := mess_test_service.CreateConversation(CreateConversationC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
 	}
-	CreateMessageM1 = message.Message{
-		Text:       "test1",
-		AuthorUuid: test1mock,
+	UC1.ConversationUuid = test1.Uuid
+	_, msg = mess_test_service.CreateUserConversation(UC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
 	}
-	test1text = "test1"
-)
+
+	result, msg := mess_test_service.GetConversationsByUser(test1mock)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+	if len(result) != 1 || result[0].Conversation.Uuid != test1.Uuid || result[0].Participants[0] != result[0].UserConversation {
+		fmt.Println(len(result) != 1, result[0].Conversation.Uuid != test1.Uuid, result[0].Participants[0] == result[0].UserConversation)
+		t.Error(fmt.Sprintf("received data is not right, %+v", result))
+		return
+	}
+	test2, msg := mess_test_service.CreateConversation(CreateConversationC2)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+	UC1.ConversationUuid = test2.Uuid
+	_, msg = mess_test_service.CreateUserConversation(UC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	result, msg = mess_test_service.GetConversationsByUser(test1mock)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+	if len(result) != 2 || result[0].Conversation.Uuid != test1.Uuid || result[1].Conversation.Uuid != test2.Uuid || result[0].Participants[0] != result[0].UserConversation || result[1].Participants[0].UserUuid != result[0].Participants[0].UserUuid {
+		fmt.Println(len(result) != 2, result[0].Conversation.Uuid != test1.Uuid, result[1].Conversation.Uuid != test2.Uuid, result[0].Participants[0] != result[0].UserConversation, result[1].Participants[0].UserUuid != result[0].Participants[0].UserUuid)
+		t.Error(fmt.Sprintf("received data is not right, %+v \n %+v", result[0], result[1]))
+		return
+	}
+
+}
 
 func TestCreateGetMessage(t *testing.T) {
 	defer db_ctrl.DBClient.Flush()
 	convo_uuid, response_msg := mess_test_service.CreateConversation(CreateConversationC1)
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
+		return
+	}
+	UC1.ConversationUuid = convo_uuid.Uuid
+	uc_uuid, msg := mess_test_service.CreateUserConversation(UC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
 	}
 	req_msg := CreateMessageM1
 	req_msg.ConversationUuid = convo_uuid.Uuid
 
-	test1, response_msg := mess_test_service.CreateMessage(req_msg)
+	_, response_msg = mess_test_service.CreateMessage(req_msg)
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
+		return
 	}
 
-	result, response_msg := mess_test_service.GetMessageByUuid(test1.Uuid)
+	req_msg.AuthorUuid = test2mock
+	_, response_msg = mess_test_service.CreateMessage(req_msg)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+		return
+	}
+
+	result, response_msg := mess_test_service.GetMessagesByConversation(uc_uuid.Uuid, convo_uuid.Uuid)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+		return
+	}
+	if len(result) != 2 || result[0].Uuid == "" || result[0].Text != test1text || result[1].AuthorUuid != test2mock {
+		fmt.Println(len(result) != 1, result[0].Uuid == "", result[0].Text != test1text)
+		t.Error(fmt.Sprintf("received data is not right, %+v", result))
+		return
+	}
+
+	convos, msg := mess_test_service.GetConversationsByUser(test1mock)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	if convos[0].UserConversation.LastAccessUuid != result[1].Uuid {
+		t.Error("userConversation not updated")
+		return
+	}
+
+}
+
+func TestUpdateMessage(t *testing.T) {
+	defer db_ctrl.DBClient.Flush()
+	convo_uuid, response_msg := mess_test_service.CreateConversation(CreateConversationC1)
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
 	}
-	if result.Uuid == "" || result.Text != test1text {
+	UC1.ConversationUuid = convo_uuid.Uuid
+	uc_uuid, msg := mess_test_service.CreateUserConversation(UC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+	req_msg := CreateMessageM1
+	req_msg.ConversationUuid = convo_uuid.Uuid
+
+	_, response_msg = mess_test_service.CreateMessage(req_msg)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+		return
+	}
+
+	req_msg.AuthorUuid = test2mock
+	_, response_msg = mess_test_service.CreateMessage(req_msg)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+		return
+	}
+
+	result, response_msg := mess_test_service.GetMessagesByConversation(uc_uuid.Uuid, convo_uuid.Uuid)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+		return
+	}
+	if result[0].Text != test1text {
 		t.Error(fmt.Sprintf("received data is not right, %+v", result))
 		return
+	}
+
+	changetext := "test2help"
+
+	msg_updated, response_msg := mess_test_service.UpdateMessage(result[0].Uuid, changetext)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+		return
+	}
+	if msg_updated.Text != changetext {
+		t.Error(fmt.Sprintf("error updating msg: %+v", result))
+		return
+	}
+
+	result, response_msg = mess_test_service.GetMessagesByConversation(uc_uuid.Uuid, convo_uuid.Uuid)
+	if response_msg.GetStatus() != 200 {
+		t.Error(response_msg)
+	}
+	if result[0].Text == test1text || result[0].Text != changetext {
+		fmt.Println(result[1].Text == test1text, result[1].Text != changetext)
+		t.Error(fmt.Sprintf("received data has bad body, %+v\n%+v", result[0], result[1]))
+		return
+	}
+
+	uc_result, msg := mess_test_service.GetConversationsByUser(test1mock)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	if uc_result[0].UserConversation.LastAccessUuid != result[1].Uuid {
+		fmt.Printf("\n%+v\n%+v\n", result[0], result[1])
+		fmt.Printf("%+v", uc_result[0].UserConversation.LastAccessUuid)
+		t.Error("this shouldnt be the last_message read")
 	}
 }
 
 var (
-	CreateUserConversationC1 = conversation.Conversation{
-		Type: 1,
+	convo_info = conversation.ConversationInfo{
+		Name:        "change1",
+		Description: "Difference1",
+		AvatarUrl:   "goodavatar.jpg",
 	}
-	CreateUserConversationUC1 = conversation.UserConversation{
-		UserUuid: test1mock,
-	}
-	useruuidmock = test1mock
 )
 
+func TestConversationUpdateInfo(t *testing.T) {
+	defer db_ctrl.DBClient.Flush()
+	test1, msg := mess_test_service.CreateConversation(CreateConversationC2)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+	UC1.ConversationUuid = test1.Uuid
+	_, msg = mess_test_service.CreateUserConversation(UC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	test2, msg := mess_test_service.CreateConversation(CreateConversationC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+	UC1.ConversationUuid = test2.Uuid
+	_, msg = mess_test_service.CreateUserConversation(UC1)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	result, msg := mess_test_service.GetConversationsByUser(test1mock)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	if len(result) != 2 || result[0].Conversation.Uuid != test1.Uuid || result[0].Participants[0] != result[0].UserConversation || result[0].Conversation.ConversationInfo == convo_info {
+		fmt.Println(len(result) != 1, result[0].Conversation.Uuid != test1.Uuid, result[0].Participants[0] == result[0].UserConversation)
+		t.Error(fmt.Sprintf("received data is not right, %+v", result))
+		return
+	}
+	_, msg = mess_test_service.UpdateConversationInfo(result[0].Conversation.Uuid, convo_info)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	result, msg = mess_test_service.GetConversationsByUser(test1mock)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
+		return
+	}
+
+	if result[0].Conversation.ConversationInfo != convo_info {
+		t.Error(fmt.Printf("\nconversation_info should have changed\n%+v", result[0].Conversation.ConversationInfo))
+	}
+
+}
+
+/*
 func TestCreateGetUserConversation(t *testing.T) {
 	defer db_ctrl.DBClient.Flush()
 	uuid, response_msg := mess_test_service.CreateConversation(CreateUserConversationC1)
@@ -515,28 +721,6 @@ var (
 	changetext = "change1"
 )
 
-func TestUpdateMessage(t *testing.T) {
-	defer db_ctrl.DBClient.Flush()
-	uuid, response_msg := mess_test_service.CreateConversation(GetUCC1)
-	if response_msg.GetStatus() != 200 {
-		t.Error(response_msg)
-	}
-
-	UpdateConvoM1.ConversationUuid = uuid.Uuid
-
-	uuid, response_msg = mess_test_service.CreateMessage(UpdateConvoM1)
-	if response_msg.GetStatus() != 200 {
-		t.Error(response_msg)
-	}
-
-	result, response_msg := mess_test_service.UpdateMessage(uuid.Uuid, changetext)
-	if response_msg.GetStatus() != 200 {
-		t.Error(response_msg)
-	}
-	if result.Text != changetext {
-		t.Error(fmt.Sprintf("error updating msg: %+v", result))
-	}
-}
 
 var (
 	UpdateUC1 = conversation.UserConversation{
@@ -624,3 +808,4 @@ func TestConversationUpdateInfo(t *testing.T) {
 		t.Error(fmt.Sprintf("something differs %+v", convo))
 	}
 }
+*/

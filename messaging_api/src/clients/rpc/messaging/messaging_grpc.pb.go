@@ -19,20 +19,15 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessagingProtoInterfaceClient interface {
 	CreateConversation(ctx context.Context, in *Conversation, opts ...grpc.CallOption) (*UuidMsg, error)
-	GetConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ConvMsgResponse, error)
+	//Changed, now instead of returning conversations alone it returns an object with a conversation an its participants inside.
+	//Later should be fetched directly through JWT info.
 	GetConversationsByUser(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayConversationResponse, error)
-	UpdateConversationLastMsg(ctx context.Context, in *UuidandMessageUuid, opts ...grpc.CallOption) (*ConvMsgResponse, error)
-	UpdateConversationInfo(ctx context.Context, in *Conversation, opts ...grpc.CallOption) (*ConvMsgResponse, error)
+	UpdateConversationInfo(ctx context.Context, in *Conversation, opts ...grpc.CallOption) (*UpdateConversationResponse, error)
 	CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*UuidMsg, error)
-	GetMessage(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*MessageMsgResponse, error)
-	GetMessagesByAuthor(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayMessageResponse, error)
-	GetMessagesByConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayMessageResponse, error)
+	//Later change userUuid to use JWT info.
+	GetMessagesByConversation(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*ArrayMessageResponse, error)
 	UpdateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageMsgResponse, error)
 	CreateUserConversation(ctx context.Context, in *UserConversation, opts ...grpc.CallOption) (*UuidMsg, error)
-	GetUserConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UCMsgResponse, error)
-	GetUserConversationsForUser(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayUserConversationResponse, error)
-	GetUserConversationsForConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayUserConversationResponse, error)
-	UpdateUserConversation(ctx context.Context, in *UuidandMessageUuid, opts ...grpc.CallOption) (*UCMsgResponse, error)
 }
 
 type messagingProtoInterfaceClient struct {
@@ -52,15 +47,6 @@ func (c *messagingProtoInterfaceClient) CreateConversation(ctx context.Context, 
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) GetConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ConvMsgResponse, error) {
-	out := new(ConvMsgResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetConversation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *messagingProtoInterfaceClient) GetConversationsByUser(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayConversationResponse, error) {
 	out := new(ArrayConversationResponse)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetConversationsByUser", in, out, opts...)
@@ -70,17 +56,8 @@ func (c *messagingProtoInterfaceClient) GetConversationsByUser(ctx context.Conte
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) UpdateConversationLastMsg(ctx context.Context, in *UuidandMessageUuid, opts ...grpc.CallOption) (*ConvMsgResponse, error) {
-	out := new(ConvMsgResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/UpdateConversationLastMsg", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagingProtoInterfaceClient) UpdateConversationInfo(ctx context.Context, in *Conversation, opts ...grpc.CallOption) (*ConvMsgResponse, error) {
-	out := new(ConvMsgResponse)
+func (c *messagingProtoInterfaceClient) UpdateConversationInfo(ctx context.Context, in *Conversation, opts ...grpc.CallOption) (*UpdateConversationResponse, error) {
+	out := new(UpdateConversationResponse)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/UpdateConversationInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -97,25 +74,7 @@ func (c *messagingProtoInterfaceClient) CreateMessage(ctx context.Context, in *M
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) GetMessage(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*MessageMsgResponse, error) {
-	out := new(MessageMsgResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetMessage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagingProtoInterfaceClient) GetMessagesByAuthor(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayMessageResponse, error) {
-	out := new(ArrayMessageResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetMessagesByAuthor", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagingProtoInterfaceClient) GetMessagesByConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayMessageResponse, error) {
+func (c *messagingProtoInterfaceClient) GetMessagesByConversation(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*ArrayMessageResponse, error) {
 	out := new(ArrayMessageResponse)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetMessagesByConversation", in, out, opts...)
 	if err != nil {
@@ -142,61 +101,20 @@ func (c *messagingProtoInterfaceClient) CreateUserConversation(ctx context.Conte
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) GetUserConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UCMsgResponse, error) {
-	out := new(UCMsgResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetUserConversation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagingProtoInterfaceClient) GetUserConversationsForUser(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayUserConversationResponse, error) {
-	out := new(ArrayUserConversationResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetUserConversationsForUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagingProtoInterfaceClient) GetUserConversationsForConversation(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayUserConversationResponse, error) {
-	out := new(ArrayUserConversationResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/GetUserConversationsForConversation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagingProtoInterfaceClient) UpdateUserConversation(ctx context.Context, in *UuidandMessageUuid, opts ...grpc.CallOption) (*UCMsgResponse, error) {
-	out := new(UCMsgResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/UpdateUserConversation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MessagingProtoInterfaceServer is the server API for MessagingProtoInterface service.
 // All implementations must embed UnimplementedMessagingProtoInterfaceServer
 // for forward compatibility
 type MessagingProtoInterfaceServer interface {
 	CreateConversation(context.Context, *Conversation) (*UuidMsg, error)
-	GetConversation(context.Context, *Uuid) (*ConvMsgResponse, error)
+	//Changed, now instead of returning conversations alone it returns an object with a conversation an its participants inside.
+	//Later should be fetched directly through JWT info.
 	GetConversationsByUser(context.Context, *Uuid) (*ArrayConversationResponse, error)
-	UpdateConversationLastMsg(context.Context, *UuidandMessageUuid) (*ConvMsgResponse, error)
-	UpdateConversationInfo(context.Context, *Conversation) (*ConvMsgResponse, error)
+	UpdateConversationInfo(context.Context, *Conversation) (*UpdateConversationResponse, error)
 	CreateMessage(context.Context, *Message) (*UuidMsg, error)
-	GetMessage(context.Context, *Uuid) (*MessageMsgResponse, error)
-	GetMessagesByAuthor(context.Context, *Uuid) (*ArrayMessageResponse, error)
-	GetMessagesByConversation(context.Context, *Uuid) (*ArrayMessageResponse, error)
+	//Later change userUuid to use JWT info.
+	GetMessagesByConversation(context.Context, *MessageRequest) (*ArrayMessageResponse, error)
 	UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error)
 	CreateUserConversation(context.Context, *UserConversation) (*UuidMsg, error)
-	GetUserConversation(context.Context, *Uuid) (*UCMsgResponse, error)
-	GetUserConversationsForUser(context.Context, *Uuid) (*ArrayUserConversationResponse, error)
-	GetUserConversationsForConversation(context.Context, *Uuid) (*ArrayUserConversationResponse, error)
-	UpdateUserConversation(context.Context, *UuidandMessageUuid) (*UCMsgResponse, error)
 	mustEmbedUnimplementedMessagingProtoInterfaceServer()
 }
 
@@ -207,28 +125,16 @@ type UnimplementedMessagingProtoInterfaceServer struct {
 func (UnimplementedMessagingProtoInterfaceServer) CreateConversation(context.Context, *Conversation) (*UuidMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateConversation not implemented")
 }
-func (UnimplementedMessagingProtoInterfaceServer) GetConversation(context.Context, *Uuid) (*ConvMsgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetConversation not implemented")
-}
 func (UnimplementedMessagingProtoInterfaceServer) GetConversationsByUser(context.Context, *Uuid) (*ArrayConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetConversationsByUser not implemented")
 }
-func (UnimplementedMessagingProtoInterfaceServer) UpdateConversationLastMsg(context.Context, *UuidandMessageUuid) (*ConvMsgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateConversationLastMsg not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) UpdateConversationInfo(context.Context, *Conversation) (*ConvMsgResponse, error) {
+func (UnimplementedMessagingProtoInterfaceServer) UpdateConversationInfo(context.Context, *Conversation) (*UpdateConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateConversationInfo not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) CreateMessage(context.Context, *Message) (*UuidMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMessage not implemented")
 }
-func (UnimplementedMessagingProtoInterfaceServer) GetMessage(context.Context, *Uuid) (*MessageMsgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) GetMessagesByAuthor(context.Context, *Uuid) (*ArrayMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMessagesByAuthor not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) GetMessagesByConversation(context.Context, *Uuid) (*ArrayMessageResponse, error) {
+func (UnimplementedMessagingProtoInterfaceServer) GetMessagesByConversation(context.Context, *MessageRequest) (*ArrayMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessagesByConversation not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error) {
@@ -236,18 +142,6 @@ func (UnimplementedMessagingProtoInterfaceServer) UpdateMessage(context.Context,
 }
 func (UnimplementedMessagingProtoInterfaceServer) CreateUserConversation(context.Context, *UserConversation) (*UuidMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUserConversation not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) GetUserConversation(context.Context, *Uuid) (*UCMsgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserConversation not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) GetUserConversationsForUser(context.Context, *Uuid) (*ArrayUserConversationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserConversationsForUser not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) GetUserConversationsForConversation(context.Context, *Uuid) (*ArrayUserConversationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserConversationsForConversation not implemented")
-}
-func (UnimplementedMessagingProtoInterfaceServer) UpdateUserConversation(context.Context, *UuidandMessageUuid) (*UCMsgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserConversation not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) mustEmbedUnimplementedMessagingProtoInterfaceServer() {
 }
@@ -281,24 +175,6 @@ func _MessagingProtoInterface_CreateConversation_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MessagingProtoInterface_GetConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).GetConversation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetConversation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetConversation(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MessagingProtoInterface_GetConversationsByUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Uuid)
 	if err := dec(in); err != nil {
@@ -313,24 +189,6 @@ func _MessagingProtoInterface_GetConversationsByUser_Handler(srv interface{}, ct
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MessagingProtoInterfaceServer).GetConversationsByUser(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MessagingProtoInterface_UpdateConversationLastMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UuidandMessageUuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).UpdateConversationLastMsg(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/UpdateConversationLastMsg",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).UpdateConversationLastMsg(ctx, req.(*UuidandMessageUuid))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -371,44 +229,8 @@ func _MessagingProtoInterface_CreateMessage_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MessagingProtoInterface_GetMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).GetMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetMessage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetMessage(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MessagingProtoInterface_GetMessagesByAuthor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).GetMessagesByAuthor(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetMessagesByAuthor",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetMessagesByAuthor(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MessagingProtoInterface_GetMessagesByConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
+	in := new(MessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -420,7 +242,7 @@ func _MessagingProtoInterface_GetMessagesByConversation_Handler(srv interface{},
 		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetMessagesByConversation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetMessagesByConversation(ctx, req.(*Uuid))
+		return srv.(MessagingProtoInterfaceServer).GetMessagesByConversation(ctx, req.(*MessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -461,78 +283,6 @@ func _MessagingProtoInterface_CreateUserConversation_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MessagingProtoInterface_GetUserConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).GetUserConversation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetUserConversation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetUserConversation(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MessagingProtoInterface_GetUserConversationsForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).GetUserConversationsForUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetUserConversationsForUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetUserConversationsForUser(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MessagingProtoInterface_GetUserConversationsForConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).GetUserConversationsForConversation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/GetUserConversationsForConversation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).GetUserConversationsForConversation(ctx, req.(*Uuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MessagingProtoInterface_UpdateUserConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UuidandMessageUuid)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagingProtoInterfaceServer).UpdateUserConversation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/UpdateUserConversation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).UpdateUserConversation(ctx, req.(*UuidandMessageUuid))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // MessagingProtoInterface_ServiceDesc is the grpc.ServiceDesc for MessagingProtoInterface service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -545,16 +295,8 @@ var MessagingProtoInterface_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MessagingProtoInterface_CreateConversation_Handler,
 		},
 		{
-			MethodName: "GetConversation",
-			Handler:    _MessagingProtoInterface_GetConversation_Handler,
-		},
-		{
 			MethodName: "GetConversationsByUser",
 			Handler:    _MessagingProtoInterface_GetConversationsByUser_Handler,
-		},
-		{
-			MethodName: "UpdateConversationLastMsg",
-			Handler:    _MessagingProtoInterface_UpdateConversationLastMsg_Handler,
 		},
 		{
 			MethodName: "UpdateConversationInfo",
@@ -563,14 +305,6 @@ var MessagingProtoInterface_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateMessage",
 			Handler:    _MessagingProtoInterface_CreateMessage_Handler,
-		},
-		{
-			MethodName: "GetMessage",
-			Handler:    _MessagingProtoInterface_GetMessage_Handler,
-		},
-		{
-			MethodName: "GetMessagesByAuthor",
-			Handler:    _MessagingProtoInterface_GetMessagesByAuthor_Handler,
 		},
 		{
 			MethodName: "GetMessagesByConversation",
@@ -583,22 +317,6 @@ var MessagingProtoInterface_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateUserConversation",
 			Handler:    _MessagingProtoInterface_CreateUserConversation_Handler,
-		},
-		{
-			MethodName: "GetUserConversation",
-			Handler:    _MessagingProtoInterface_GetUserConversation_Handler,
-		},
-		{
-			MethodName: "GetUserConversationsForUser",
-			Handler:    _MessagingProtoInterface_GetUserConversationsForUser_Handler,
-		},
-		{
-			MethodName: "GetUserConversationsForConversation",
-			Handler:    _MessagingProtoInterface_GetUserConversationsForConversation_Handler,
-		},
-		{
-			MethodName: "UpdateUserConversation",
-			Handler:    _MessagingProtoInterface_UpdateUserConversation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

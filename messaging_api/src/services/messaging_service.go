@@ -16,20 +16,27 @@ type MessagingService interface {
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
 	CreateUserConversation(conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message)
 
-	GetConversationsByUser(string) ([]conversation.Conversation, server_message.Svr_message)
+	GetConversationsByUser(string) ([]conversation.ConversationResponse, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
-	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
-	GetMessagesByAuthor(string) ([]message.Message, server_message.Svr_message)
-	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)
-	GetMessageByUuid(string) (*message.Message, server_message.Svr_message)
+	GetMessagesByConversation(string, string) ([]message.Message, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
-
-	GetUserConversationsForUser(string) ([]conversation.UserConversation, server_message.Svr_message)
-	GetUserConversationsForConversation(string) ([]conversation.UserConversation, server_message.Svr_message)
-	GetUserConversationByUuid(string) (*conversation.UserConversation, server_message.Svr_message)
-	UserConversationUpdateLastAccess(string, string) (*conversation.UserConversation, server_message.Svr_message)
+	/*
+		UserConversationUpdateLastAccess(string, string) (*conversation.UserConversation, server_message.Svr_message)
+	*/
+	/*
+		UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
+	*/
+	/*
+		GetMessagesByAuthor(string) ([]message.Message, server_message.Svr_message)
+		GetMessageByUuid(string) (*message.Message, server_message.Svr_message)
+	*/
+	/*
+		GetUserConversationsForUser(string) ([]conversation.UserConversation, server_message.Svr_message)
+		GetUserConversationsForConversation(string) ([]conversation.UserConversation, server_message.Svr_message)
+		GetUserConversationByUuid(string) (*conversation.UserConversation, server_message.Svr_message)
+	*/
 }
 type messagingService struct {
 	dbrepo      db.MessagingDBRepository
@@ -64,10 +71,16 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 	if err != nil {
 		return nil, err
 	}
-	//Later decide whether conversation_last_message will be updated here or elsewhere
+	//Updating Conversations last msgs from here.
+	_, err = ms.dbrepo.UpdateConversationLastMsg(msg.ConversationUuid, uuid.Uuid)
+	if err != nil {
+		return nil, err
+	}
+
 	return uuid, server_message.NewCustomMessage(http.StatusOK, "message created")
 }
 func (ms *messagingService) CreateUserConversation(userconvo conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message) {
+	//Validation
 	user, response_msg := ms.proto_users.GetUser(userconvo.UserUuid)
 	if response_msg.GetStatus() != 200 {
 		return nil, response_msg
@@ -79,7 +92,7 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 		return nil, response_msg
 	}
 	userconvo.ConversationId = convo.Id
-
+	//---
 	uuid, err := ms.dbrepo.CreateUserConversation(userconvo)
 	if err != nil {
 		return nil, err
@@ -89,13 +102,15 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 
 //
 
-func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversation.Conversation, server_message.Svr_message) {
+func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversation.ConversationResponse, server_message.Svr_message) {
 	conversations, err := ms.dbrepo.GetConversationsByUser(user_uuid)
 	if err != nil {
 		return nil, err
 	}
+
 	return conversations, server_message.NewCustomMessage(http.StatusOK, "conversations retrieved")
 }
+
 func (ms *messagingService) GetConversationByUuid(uuid string) (*conversation.Conversation, server_message.Svr_message) {
 	conversation, err := ms.dbrepo.GetConversationByUuid(uuid)
 	if err != nil {
@@ -103,14 +118,6 @@ func (ms *messagingService) GetConversationByUuid(uuid string) (*conversation.Co
 	}
 	return conversation, server_message.NewCustomMessage(http.StatusOK, "conversation retrieved")
 }
-func (ms *messagingService) UpdateConversationLastMsg(uuid string, last_msg string) (*conversation.Conversation, server_message.Svr_message) {
-	result, err := ms.dbrepo.UpdateConversationLastMsg(uuid, last_msg)
-	if err != nil {
-		return nil, err
-	}
-	return result, server_message.NewCustomMessage(http.StatusOK, "conversation updatee retrieved")
-}
-
 func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
 	convo, err := ms.dbrepo.UpdateConversationInfo(uuid, conv_info)
 	if err != nil {
@@ -122,30 +129,16 @@ func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conver
 
 //
 
-func (ms *messagingService) GetMessageByUuid(uuid string) (*message.Message, server_message.Svr_message) {
-	message, err := ms.dbrepo.GetMessageByUuid(uuid)
+func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid string) ([]message.Message, server_message.Svr_message) {
+	messages, err := ms.dbrepo.GetMessagesByConversation(convo_uuid)
 	if err != nil {
 		return nil, err
 	}
-	return message, server_message.NewCustomMessage(http.StatusOK, "message retrieved")
-}
-func (ms *messagingService) GetMessagesByAuthor(uuid string) ([]message.Message, server_message.Svr_message) {
-	user, msg := ms.proto_users.GetUser(uuid)
-	if msg.GetStatus() != 200 {
-		return nil, msg
+	_, err = ms.dbrepo.UserConversationUpdateLastAccess(uc_uuid, messages[len(messages)-1].Uuid)
+	if err != nil {
+		return nil, err
 	}
 
-	messages, err := ms.dbrepo.GetMessagesByAuthor(user.Id)
-	if err != nil {
-		return nil, err
-	}
-	return messages, server_message.NewCustomMessage(http.StatusOK, "messages retrieved")
-}
-func (ms *messagingService) GetMessagesByConversation(uuid string) ([]message.Message, server_message.Svr_message) {
-	messages, err := ms.dbrepo.GetMessagesByConversation(uuid)
-	if err != nil {
-		return nil, err
-	}
 	return messages, server_message.NewCustomMessage(http.StatusOK, "messages retrieved")
 }
 func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
@@ -158,7 +151,26 @@ func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Me
 }
 
 //
-
+//
+/*
+func (ms *messagingService) updateConversationLastMsg(uuid string, last_msg string) (*conversation.Conversation, server_message.Svr_message) {
+	result, err := ms.dbrepo.UpdateConversationLastMsg(uuid, last_msg)
+	if err != nil {
+		return nil, err
+	}
+	return result, server_message.NewCustomMessage(http.StatusOK, "conversation updatee retrieved")
+}
+*/
+/*
+func (ms *messagingService) UserConversationUpdateLastAccess(uuid string, last_access_msg string) (*conversation.UserConversation, server_message.Svr_message) {
+	result, err := ms.dbrepo.UserConversationUpdateLastAccess(uuid, last_access_msg)
+	if err != nil {
+		return nil, err
+	}
+	return result, server_message.NewCustomMessage(http.StatusOK, "user_conversation retrieved")
+}
+*/
+/*
 func (ms *messagingService) GetUserConversationsForUser(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
 	user, msg := ms.proto_users.GetUser(uuid)
 	if msg.GetStatus() != 200 {
@@ -178,6 +190,30 @@ func (ms *messagingService) GetUserConversationsForConversation(uuid string) ([]
 	}
 	return user_conversations, server_message.NewCustomMessage(http.StatusOK, "user_conversation retrieved")
 }
+*/
+
+/*
+func (ms *messagingService) GetMessageByUuid(uuid string) (*message.Message, server_message.Svr_message) {
+	message, err := ms.dbrepo.GetMessageByUuid(uuid)
+	if err != nil {
+		return nil, err
+	}
+	return message, server_message.NewCustomMessage(http.StatusOK, "message retrieved")
+}
+func (ms *messagingService) GetMessagesByAuthor(uuid string) ([]message.Message, server_message.Svr_message) {
+	user, msg := ms.proto_users.GetUser(uuid)
+	if msg.GetStatus() != 200 {
+		return nil, msg
+	}
+
+	messages, err := ms.dbrepo.GetMessagesByAuthor(user.Id)
+	if err != nil {
+		return nil, err
+	}
+	return messages, server_message.NewCustomMessage(http.StatusOK, "messages retrieved")
+}
+*/
+/*
 func (ms *messagingService) GetUserConversationByUuid(uuid string) (*conversation.UserConversation, server_message.Svr_message) {
 	user_conversation, err := ms.dbrepo.GetUserConversationByUuid(uuid)
 	if err != nil {
@@ -186,10 +222,4 @@ func (ms *messagingService) GetUserConversationByUuid(uuid string) (*conversatio
 	return user_conversation, server_message.NewCustomMessage(http.StatusOK, "user_conversation retrieved")
 
 }
-func (ms *messagingService) UserConversationUpdateLastAccess(uuid string, last_access_msg string) (*conversation.UserConversation, server_message.Svr_message) {
-	result, err := ms.dbrepo.UserConversationUpdateLastAccess(uuid, last_access_msg)
-	if err != nil {
-		return nil, err
-	}
-	return result, server_message.NewCustomMessage(http.StatusOK, "user_conversation retrieved")
-}
+*/

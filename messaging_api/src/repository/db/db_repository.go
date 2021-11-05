@@ -14,15 +14,19 @@ const (
 	queryCreateUserConversation = "INSERT INTO user_conversation(user_id, user_uuid, conversation_id, conversation_uuid) VALUES($1, $2, $3, $4) RETURNING uuid;"
 	queryCreateMessage          = "INSERT INTO message_table(conversation_id, conversation_uuid, author_id, author_uuid, body) VALUES($1, $2, $3, $4, $5) RETURNING uuid;"
 
-	queryGetConversationsFromUser  = "SELECT c.id, c.uuid, c.type, date_part('epoch',c.created_at), c.last_message_uuid, c.name, c.description, c.avatar_url FROM conversation c JOIN user_conversation uc ON c.id = uc.conversation_id WHERE uc.user_uuid =$1;"
+	queryGetConversationsFromUser = `SELECT c.id, c.uuid, c.type, date_part('epoch',c.created_at), c.last_message_uuid, c.name, c.description, c.avatar_url,
+	uc.id, uc.uuid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at)
+	FROM conversation c JOIN user_conversation uc ON c.id = uc.conversation_id 
+	WHERE uc.user_uuid =$1
+	ORDER BY c.created_at;`
 	queryGetConversationByUuid     = "SELECT id, uuid, type, date_part('epoch',created_at), last_message_uuid, name, description, avatar_url FROM conversation WHERE uuid=$1;"
 	queryConversationUpdateInfo    = "UPDATE conversation SET name=$2, description=$3, avatar_url=$4 WHERE uuid=$1 RETURNING uuid, name, description, avatar_url;"
 	queryConversationUpdateMsgUuid = "UPDATE conversation SET last_message_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_message_uuid;"
 
-	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1;"
-	queryGetMessageByAuthorId          = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, body, date_part('epoch',created_at), date_part('epoch',updated_at) FROM message_table WHERE author_id=$1;"
-	queryGetMessageByUuid              = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, body, date_part('epoch',created_at), date_part('epoch',updated_at) FROM message_table WHERE uuid=$1;"
-	queryUpdateMessage                 = "UPDATE message_table SET body=$2, updated_at=timezone('utc'::text, now()) WHERE uuid=$1 RETURNING uuid, body, date_part('epoch',updated_at);"
+	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1 ORDER BY m.created_at;"
+	//	queryGetMessageByAuthorId          = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, body, date_part('epoch',created_at), date_part('epoch',updated_at) FROM message_table WHERE author_id=$1;"
+	//	queryGetMessageByUuid              = "SELECT id, uuid, conversation_id, conversation_uuid, author_id, author_uuid, body, date_part('epoch',created_at), date_part('epoch',updated_at) FROM message_table WHERE uuid=$1;"
+	queryUpdateMessage = "UPDATE message_table SET body=$2, updated_at=timezone('utc'::text, now()) WHERE uuid=$1 RETURNING uuid, body, date_part('epoch',updated_at);"
 
 	queryGetUserConversationForUser         = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE user_id=$1;"
 	queryGetUserConversationByUuid          = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE uuid=$1;"
@@ -35,20 +39,27 @@ type MessagingDBRepository interface {
 	CreateUserConversation(conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message)
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
 
-	GetConversationsByUser(string) ([]conversation.Conversation, server_message.Svr_message)
-	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
+	GetConversationsByUser(string) ([]conversation.ConversationResponse, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 
 	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)
-	GetMessagesByAuthor(int64) ([]message.Message, server_message.Svr_message)
-	GetMessageByUuid(string) (*message.Message, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
 
-	GetUserConversationsForUser(int64) ([]conversation.UserConversation, server_message.Svr_message)
-	GetUserConversationsForConversation(string) ([]conversation.UserConversation, server_message.Svr_message)
-	GetUserConversationByUuid(string) (*conversation.UserConversation, server_message.Svr_message)
 	UserConversationUpdateLastAccess(string, string) (*conversation.UserConversation, server_message.Svr_message)
+	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
+
+	/*
+		GetMessagesByAuthor(int64) ([]message.Message, server_message.Svr_message)
+		GetMessageByUuid(string) (*message.Message, server_message.Svr_message)
+	*/
+
+	GetUserConversationByUuid(string) (*conversation.UserConversation, server_message.Svr_message)
+
+	/*
+		GetUserConversationsForUser(int64) ([]conversation.UserConversation, server_message.Svr_message)
+		GetUserConversationsForConversation(string) ([]conversation.UserConversation, server_message.Svr_message)
+	*/
 }
 
 type messagingDBRepository struct {
@@ -68,37 +79,41 @@ func (dbr *messagingDBRepository) CreateConversation(convo conversation.Conversa
 	}
 	return &uuid, nil
 }
-func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]conversation.Conversation, server_message.Svr_message) {
+func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]conversation.ConversationResponse, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	rows, err := dbclient.Query(queryGetConversationsFromUser, user_uuid)
 	if err != nil {
 		logger.Error("error in GetConversationsByUser function, in the query execution", err)
 		return nil, server_message.NewInternalError()
 	}
-	var convos []conversation.Conversation
+	var array_convos_response []conversation.ConversationResponse
 	for rows.Next() {
+		convo_response := conversation.ConversationResponse{}
 		convo := conversation.Conversation{}
-		if err := rows.Scan(&convo.Id, &convo.Uuid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl); err != nil {
+		uc := conversation.UserConversation{}
+		if err := rows.Scan(&convo.Id, &convo.Uuid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl,
+			&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt,
+		); err != nil {
 			logger.Error("error in GetConversationsByUser function, scanning rows", err)
 			return nil, server_message.NewInternalError()
 		}
-		convos = append(convos, convo)
+		convo_response.Conversation = convo
+		convo_response.UserConversation = uc
+		array_convos_response = append(array_convos_response, convo_response)
 	}
-	if len(convos) == 0 {
+	for index, convo_response := range array_convos_response {
+		ucs, aErr := dbr.getUserConversationsForConversation(convo_response.Conversation.Uuid)
+		if aErr != nil {
+			return nil, aErr
+		}
+		array_convos_response[index].Participants = ucs
+	}
+	if len(array_convos_response) == 0 {
 		return nil, server_message.NewNotFoundError("no conversations where found in which this user partcipates")
 	}
-	return convos, nil
+	return array_convos_response, nil
 }
-func (dbr *messagingDBRepository) GetConversationByUuid(uuid string) (*conversation.Conversation, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	row := dbclient.QueryRow(queryGetConversationByUuid, uuid)
-	convo := conversation.Conversation{}
-	if err := row.Scan(&convo.Id, &convo.Uuid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl); err != nil {
-		logger.Error("error in GetConversationByUuid function", err)
-		return nil, server_message.NewInternalError()
-	}
-	return &convo, nil
-}
+
 func (dbr *messagingDBRepository) UpdateConversationInfo(uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	row := dbclient.QueryRow(queryConversationUpdateInfo, uuid, conv_info.Name, conv_info.Description, conv_info.AvatarUrl)
@@ -151,6 +166,107 @@ func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string) ([]mess
 	}
 	return msgs, nil
 }
+
+func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	row := dbclient.QueryRow(queryUpdateMessage, uuid, text)
+	result := message.Message{}
+	if err := row.Scan(&result.Uuid, &result.Text, &result.UpdatedAt); err != nil {
+		logger.Error("error at UpdateMessage", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &result, nil
+}
+
+func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	row := dbclient.QueryRow(queryCreateUserConversation, convo.UserId, convo.UserUuid, convo.ConversationId, convo.ConversationUuid)
+	uuid := uuids.Uuid{}
+	if err := row.Scan(&uuid.Uuid); err != nil {
+		logger.Error("error creating user_conversation", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &uuid, nil
+}
+
+func (dbr *messagingDBRepository) getUserConversationsForConversation(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	rows, err := dbclient.Query(queryGetUserConversationForConversation, uuid)
+	if err != nil {
+		logger.Error("error in GetUserConversationForConversation function, getting rows", err)
+		return nil, server_message.NewInternalError()
+	}
+	ucs := []conversation.UserConversation{}
+	for rows.Next() {
+		uc := conversation.UserConversation{}
+		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
+			logger.Error("error in GetUserConversationForConversation function, scanning rows", err)
+			return nil, server_message.NewInternalError()
+		}
+		ucs = append(ucs, uc)
+	}
+	if len(ucs) == 0 {
+		return nil, server_message.NewNotFoundError("no user_conversations where found")
+	}
+	return ucs, nil
+}
+func (dbr *messagingDBRepository) GetUserConversationByUuid(uuid string) (*conversation.UserConversation, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	row := dbclient.QueryRow(queryGetUserConversationByUuid, uuid)
+	uc := conversation.UserConversation{}
+	if err := row.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
+		logger.Error("error in GetUserConversationByUuid function", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &uc, nil
+}
+
+func (dbr *messagingDBRepository) UserConversationUpdateLastAccess(uuid string, msg_uuid string) (*conversation.UserConversation, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	row := dbclient.QueryRow(queryUserConversationUpdateLastAccess, uuid, msg_uuid)
+	result := conversation.UserConversation{}
+	if err := row.Scan(&result.Uuid, &result.LastAccessUuid); err != nil {
+		logger.Error("error at UserConversationUpdateLastAccess", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &result, nil
+}
+
+func (dbr *messagingDBRepository) GetConversationByUuid(uuid string) (*conversation.Conversation, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	row := dbclient.QueryRow(queryGetConversationByUuid, uuid)
+	convo := conversation.Conversation{}
+	if err := row.Scan(&convo.Id, &convo.Uuid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl); err != nil {
+		logger.Error("error in GetConversationByUuid function", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &convo, nil
+}
+
+/*
+func (dbr *messagingDBRepository) GetUserConversationsForUser(id int64) ([]conversation.UserConversation, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	rows, err := dbclient.Query(queryGetUserConversationForUser, id)
+	if err != nil {
+		logger.Error("error in getuserconversationsforuser function, getting rows", err)
+		return nil, server_message.NewInternalError()
+	}
+	ucs := []conversation.UserConversation{}
+	for rows.Next() {
+		uc := conversation.UserConversation{}
+		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
+			logger.Error("error in getuserconversationsforuser function, scanning rows", err)
+			return nil, server_message.NewInternalError()
+		}
+		ucs = append(ucs, uc)
+	}
+	if len(ucs) == 0 {
+		return nil, server_message.NewNotFoundError("no user_conversations where found")
+	}
+	return ucs, nil
+}
+*/
+/*
 func (dbr *messagingDBRepository) GetMessagesByAuthor(id int64) ([]message.Message, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	rows, err := dbclient.Query(queryGetMessageByAuthorId, id)
@@ -182,86 +298,4 @@ func (dbr *messagingDBRepository) GetMessageByUuid(uuid string) (*message.Messag
 	}
 	return &msg, nil
 }
-func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	row := dbclient.QueryRow(queryUpdateMessage, uuid, text)
-	result := message.Message{}
-	if err := row.Scan(&result.Uuid, &result.Text, &result.UpdatedAt); err != nil {
-		logger.Error("error at UpdateMessage", err)
-		return nil, server_message.NewInternalError()
-	}
-	return &result, nil
-}
-
-func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	row := dbclient.QueryRow(queryCreateUserConversation, convo.UserId, convo.UserUuid, convo.ConversationId, convo.ConversationUuid)
-	uuid := uuids.Uuid{}
-	if err := row.Scan(&uuid.Uuid); err != nil {
-		logger.Error("error creating user_conversation", err)
-		return nil, server_message.NewInternalError()
-	}
-	return &uuid, nil
-}
-func (dbr *messagingDBRepository) GetUserConversationsForUser(id int64) ([]conversation.UserConversation, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	rows, err := dbclient.Query(queryGetUserConversationForUser, id)
-	if err != nil {
-		logger.Error("error in getuserconversationsforuser function, getting rows", err)
-		return nil, server_message.NewInternalError()
-	}
-	ucs := []conversation.UserConversation{}
-	for rows.Next() {
-		uc := conversation.UserConversation{}
-		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
-			logger.Error("error in getuserconversationsforuser function, scanning rows", err)
-			return nil, server_message.NewInternalError()
-		}
-		ucs = append(ucs, uc)
-	}
-	if len(ucs) == 0 {
-		return nil, server_message.NewNotFoundError("no user_conversations where found")
-	}
-	return ucs, nil
-}
-func (dbr *messagingDBRepository) GetUserConversationsForConversation(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	rows, err := dbclient.Query(queryGetUserConversationForConversation, uuid)
-	if err != nil {
-		logger.Error("error in GetUserConversationForConversation function, getting rows", err)
-		return nil, server_message.NewInternalError()
-	}
-	ucs := []conversation.UserConversation{}
-	for rows.Next() {
-		uc := conversation.UserConversation{}
-		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
-			logger.Error("error in GetUserConversationForConversation function, scanning rows", err)
-			return nil, server_message.NewInternalError()
-		}
-		ucs = append(ucs, uc)
-	}
-	if len(ucs) == 0 {
-		return nil, server_message.NewNotFoundError("no user_conversations where found")
-	}
-	return ucs, nil
-}
-func (dbr *messagingDBRepository) GetUserConversationByUuid(uuid string) (*conversation.UserConversation, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	row := dbclient.QueryRow(queryGetUserConversationByUuid, uuid)
-	uc := conversation.UserConversation{}
-	if err := row.Scan(&uc.Id, &uc.Uuid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
-		logger.Error("error in GetUserConversationByUuid function", err)
-		return nil, server_message.NewInternalError()
-	}
-	return &uc, nil
-}
-func (dbr *messagingDBRepository) UserConversationUpdateLastAccess(uuid string, msg_uuid string) (*conversation.UserConversation, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	row := dbclient.QueryRow(queryUserConversationUpdateLastAccess, uuid, msg_uuid)
-	result := conversation.UserConversation{}
-	if err := row.Scan(&result.Uuid, &result.LastAccessUuid); err != nil {
-		logger.Error("error at UserConversationUpdateLastAccess", err)
-		return nil, server_message.NewInternalError()
-	}
-	return &result, nil
-}
+*/
