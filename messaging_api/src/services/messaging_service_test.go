@@ -55,8 +55,8 @@ func TestMain(m *testing.M) {
 }
 
 var (
-	test1mock = "f812a359-20d4-41b2-a841-2cc003a14594"
-	test2mock = "0bf8c42d-3356-44fa-abd5-fb3fa7fa357b"
+	test1mock = "71bcb82f-65ff-4623-bf9b-7d158ed746e6"
+	test2mock = "e765f42d-28cb-4a2a-b67f-1e5441d0a6fd"
 )
 
 var (
@@ -212,7 +212,6 @@ func TestCreateGetMessage(t *testing.T) {
 		t.Error("userConversation not updated")
 		return
 	}
-
 }
 
 func TestUpdateMessage(t *testing.T) {

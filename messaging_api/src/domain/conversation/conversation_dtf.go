@@ -9,8 +9,8 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 		Uuid := pb.Uuid{Uuid: c.Uuid}
 		cpb.Uuid = &Uuid
 		cpb.CreatedAt = c.CreatedAt
-		Uuid = pb.Uuid{Uuid: c.LastMessageUuid}
-		cpb.LastMsgUuid = &Uuid
+		lastmsgUuid := pb.Uuid{Uuid: c.LastMessageUuid}
+		cpb.LastMsgUuid = &lastmsgUuid
 		cpb.Type = c.Type
 		cpb.Description = c.Description
 		cpb.AvatarUrl = c.AvatarUrl
@@ -32,14 +32,14 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 
 func (uc *UserConversation) Poblate(direction_out bool, cpb *pb.UserConversation) {
 	if direction_out {
-		Uuid := pb.Uuid{Uuid: uc.Uuid}
-		cpb.Uuid = &Uuid
-		Uuid = pb.Uuid{Uuid: uc.UserUuid}
-		cpb.UserUuid = &Uuid
-		Uuid = pb.Uuid{Uuid: uc.ConversationUuid}
-		cpb.ConversationUuid = &Uuid
-		Uuid = pb.Uuid{Uuid: uc.LastAccessUuid}
-		cpb.LastAccessUuid = &Uuid
+		uuid := pb.Uuid{Uuid: uc.Uuid}
+		cpb.Uuid = &uuid
+		userUuid := pb.Uuid{Uuid: uc.UserUuid}
+		cpb.UserUuid = &userUuid
+		conversationUuid := pb.Uuid{Uuid: uc.ConversationUuid}
+		cpb.ConversationUuid = &conversationUuid
+		last_accessUuid := pb.Uuid{Uuid: uc.LastAccessUuid}
+		cpb.LastAccessUuid = &last_accessUuid
 		cpb.CreatedAt = uc.CreatedAt
 	} else {
 		if cpb.Uuid != nil {

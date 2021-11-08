@@ -3,4 +3,4 @@
 
 - Have to see wether let Front fetch the users_profile or give it to them with GetConversations. Also with this, should then users be moved closer to the messaging api? Get direct access to the table or ...?
 
--Fix in conversation_dtf doesnt work since ll end up grabbing the same uuid, gotta fix it.
+- Add constraints
