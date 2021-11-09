@@ -8,6 +8,7 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/uuids"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/db"
+	"github.com/flydevs/chat-app-api/messaging-api/src/repository/twilio"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/users_client"
 )
 
@@ -26,13 +27,21 @@ type MessagingService interface {
 type messagingService struct {
 	dbrepo      db.MessagingDBRepository
 	proto_users users_client.UserProtoClientRepository
+	twiorepo    twilio.TwilioRepository
 }
 
-func NewMessagingService(dbrepo db.MessagingDBRepository, users_client users_client.UserProtoClientRepository) MessagingService {
-	return &messagingService{dbrepo: dbrepo, proto_users: users_client}
+func NewMessagingService(dbrepo db.MessagingDBRepository, users_client users_client.UserProtoClientRepository, twiorepo twilio.TwilioRepository) MessagingService {
+	return &messagingService{dbrepo: dbrepo, proto_users: users_client, twiorepo: twiorepo}
 }
 
 func (ms *messagingService) CreateConversation(convo conversation.Conversation) (*uuids.Uuid, server_message.Svr_message) {
+	//Twilio---
+	sid, err := ms.twiorepo.CreateConversation()
+	if err != nil {
+		return nil, err
+	}
+	convo.TwilioSid = *sid
+	//---
 	uuid, err := ms.dbrepo.CreateConversation(convo)
 	if err != nil {
 		return nil, err
@@ -51,7 +60,13 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 		return nil, response_msg
 	}
 	msg.ConversationId = convo.Id
-
+	//Twilio---
+	sid, err := ms.twiorepo.CreateMessage(convo.TwilioSid, msg)
+	if err != nil {
+		return nil, err
+	}
+	msg.TwilioSid = *sid
+	//---
 	uuid, err := ms.dbrepo.CreateMessage(msg)
 	if err != nil {
 		return nil, err
@@ -77,6 +92,12 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 		return nil, response_msg
 	}
 	userconvo.ConversationId = convo.Id
+	//---
+	//Twilio---
+	err := ms.twiorepo.JoinParticipant(convo.TwilioSid, userconvo.UserUuid)
+	if err != nil {
+		return nil, err
+	}
 	//---
 	uuid, err := ms.dbrepo.CreateUserConversation(userconvo)
 	if err != nil {

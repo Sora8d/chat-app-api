@@ -10,20 +10,20 @@ import (
 )
 
 const (
-	queryInsertConversation     = "INSERT INTO conversation(type, name, description, avatar_url) VALUES ($1,$2,$3,$4) RETURNING uuid;"
+	queryInsertConversation     = "INSERT INTO conversation(type, name, description, avatar_url, twilio_sid) VALUES ($1,$2,$3,$4,$5) RETURNING uuid;"
 	queryCreateUserConversation = "INSERT INTO user_conversation(user_id, user_uuid, conversation_id, conversation_uuid) VALUES($1, $2, $3, $4) RETURNING uuid;"
-	queryCreateMessage          = "INSERT INTO message_table(conversation_id, conversation_uuid, author_id, author_uuid, body) VALUES($1, $2, $3, $4, $5) RETURNING uuid;"
+	queryCreateMessage          = "INSERT INTO message_table(conversation_id, conversation_uuid, author_id, author_uuid, body, twilio_sid) VALUES($1, $2, $3, $4, $5, $6) RETURNING uuid;"
 
-	queryGetConversationsFromUser = `SELECT c.id, c.uuid, c.type, date_part('epoch',c.created_at), c.last_message_uuid, c.name, c.description, c.avatar_url,
+	queryGetConversationsFromUser = `SELECT c.id, c.uuid, c.twilio_sid, c.type, date_part('epoch',c.created_at), c.last_message_uuid, c.name, c.description, c.avatar_url,
 	uc.id, uc.uuid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at)
 	FROM conversation c JOIN user_conversation uc ON c.id = uc.conversation_id 
 	WHERE uc.user_uuid =$1
 	ORDER BY c.created_at;`
-	queryGetConversationByUuid     = "SELECT id, uuid, type, date_part('epoch',created_at), last_message_uuid, name, description, avatar_url FROM conversation WHERE uuid=$1;"
+	queryGetConversationByUuid     = "SELECT id, uuid, twilio_sid, type, date_part('epoch',created_at), last_message_uuid, name, description, avatar_url FROM conversation WHERE uuid=$1;"
 	queryConversationUpdateInfo    = "UPDATE conversation SET name=$2, description=$3, avatar_url=$4 WHERE uuid=$1 RETURNING uuid, name, description, avatar_url;"
 	queryConversationUpdateMsgUuid = "UPDATE conversation SET last_message_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_message_uuid;"
 
-	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1 ORDER BY m.created_at;"
+	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.twilio_sid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1 ORDER BY m.created_at;"
 	queryUpdateMessage                 = "UPDATE message_table SET body=$2, updated_at=timezone('utc'::text, now()) WHERE uuid=$1 RETURNING uuid, body, date_part('epoch',updated_at);"
 
 	queryGetUserConversationForUser         = "SELECT id, uuid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE user_id=$1;"

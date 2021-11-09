@@ -3,6 +3,7 @@ package message
 type Message struct {
 	Id               int64   `json:"id"`
 	Uuid             string  `json:"uuid"`
+	TwilioSid        string  `json:"twilio_sid"`
 	ConversationId   int64   `json:"conversation_id"`
 	ConversationUuid string  `json:"conversation_uuid"`
 	AuthorId         int64   `json:"author_id"` //Not needed anymore since messages will be searched from conversations

@@ -9,6 +9,7 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/config"
 	"github.com/flydevs/chat-app-api/messaging-api/src/controllers"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/db"
+	"github.com/flydevs/chat-app-api/messaging-api/src/repository/twilio"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/users_client"
 	"github.com/flydevs/chat-app-api/messaging-api/src/services"
 	"google.golang.org/grpc"
@@ -23,7 +24,7 @@ var (
 // usersOauthService
 
 func StartApp() {
-	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient())
+	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.NewTwilioRepository())
 	messagingServer := controllers.GetMessagingController(messagingService)
 	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
 	conn, err := net.Listen("tcp", config.Config["PORT"])
