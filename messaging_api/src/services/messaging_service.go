@@ -94,10 +94,11 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 	userconvo.ConversationId = convo.Id
 	//---
 	//Twilio---
-	err := ms.twiorepo.JoinParticipant(convo.TwilioSid, userconvo.UserUuid)
+	sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, userconvo.UserUuid)
 	if err != nil {
 		return nil, err
 	}
+	userconvo.TwilioSid = *sid
 	//---
 	uuid, err := ms.dbrepo.CreateUserConversation(userconvo)
 	if err != nil {
@@ -152,6 +153,15 @@ func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Me
 	if err != nil {
 		return nil, err
 	}
+	//Twilio
+	convo, msg := ms.GetConversationByUuid(message.ConversationUuid)
+	if msg.GetStatus() != 200 {
+		return nil, msg
+	}
+	ms.twiorepo.UpdateMessage(convo.TwilioSid, message)
+	//----
+
+	message.ConversationUuid = ""
 	return message, server_message.NewCustomMessage(http.StatusOK, "message updated")
 
 }

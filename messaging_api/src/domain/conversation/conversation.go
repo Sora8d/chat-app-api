@@ -20,7 +20,8 @@ type ConversationInfo struct {
 //
 type UserConversation struct {
 	Id               int64   `json:"id"`
-	Uuid             string  `json:"uuid"` //Check necessity
+	Uuid             string  `json:"uuid"` //This is necessary, you could also just use this instead of the conversation UUID when sendin info to the Front.
+	TwilioSid        string  `json:"twilio_sid"`
 	UserId           int64   `json:"user_id"`
 	UserUuid         string  `json:"user_uuid"` //Later check the necessity of having so many identifiers
 	ConversationId   int64   `json:"conversation_id"`

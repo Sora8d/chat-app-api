@@ -12,12 +12,13 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/users"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/db"
+	"github.com/flydevs/chat-app-api/messaging-api/src/repository/twilio"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/users_client"
 )
 
 var (
 	mess_test_service MessagingService
-	mockproto         = false
+	mockproto         = true
 )
 
 type mockprotoclient struct {
@@ -44,9 +45,9 @@ func (mpc mockprotoclient) GetUser(mockuuid string) (*users.User, server_message
 
 func init() {
 	if mockproto {
-		mess_test_service = NewMessagingService(db.GetMessagingDBRepository(), mockprotoclient{})
+		mess_test_service = NewMessagingService(db.GetMessagingDBRepository(), mockprotoclient{}, twilio.NewTwilioRepository())
 	} else {
-		mess_test_service = NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient())
+		mess_test_service = NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.NewTwilioRepository())
 	}
 }
 
@@ -73,6 +74,9 @@ var (
 	}
 	UC1 = conversation.UserConversation{
 		UserUuid: test1mock,
+	}
+	UC2 = conversation.UserConversation{
+		UserUuid: test2mock,
 	}
 	CreateMessageM1 = message.Message{
 		Text:       "test1",
@@ -114,7 +118,7 @@ func TestCreateGetConversationInternal(t *testing.T) {
 }
 
 func TestCreateGetConversationExternal(t *testing.T) {
-	defer db_ctrl.DBClient.Flush()
+	//	defer db_ctrl.DBClient.Flush()
 	test1, msg := mess_test_service.CreateConversation(CreateConversationC1)
 	if msg.GetStatus() != 200 {
 		t.Error(msg)
@@ -163,7 +167,7 @@ func TestCreateGetConversationExternal(t *testing.T) {
 }
 
 func TestCreateGetMessage(t *testing.T) {
-	defer db_ctrl.DBClient.Flush()
+	//	defer db_ctrl.DBClient.Flush()
 	convo_uuid, response_msg := mess_test_service.CreateConversation(CreateConversationC1)
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
@@ -181,6 +185,12 @@ func TestCreateGetMessage(t *testing.T) {
 	_, response_msg = mess_test_service.CreateMessage(req_msg)
 	if response_msg.GetStatus() != 200 {
 		t.Error(response_msg)
+		return
+	}
+	UC2.ConversationUuid = convo_uuid.Uuid
+	_, msg = mess_test_service.CreateUserConversation(UC2)
+	if msg.GetStatus() != 200 {
+		t.Error(msg)
 		return
 	}
 
@@ -209,7 +219,7 @@ func TestCreateGetMessage(t *testing.T) {
 	}
 
 	if convos[0].UserConversation.LastAccessUuid != result[1].Uuid {
-		t.Error("userConversation not updated")
+		t.Error(fmt.Sprintf("userConversation not updated\n %v, \n%+v", convos[0].UserConversation.LastAccessUuid, result[1].Uuid))
 		return
 	}
 }
