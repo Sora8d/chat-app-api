@@ -23,11 +23,11 @@ type MessagingProtoInterfaceClient interface {
 	//Later should be fetched directly through JWT info.
 	GetConversationsByUser(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*ArrayConversationResponse, error)
 	UpdateConversationInfo(ctx context.Context, in *Conversation, opts ...grpc.CallOption) (*UpdateConversationResponse, error)
-	CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*UuidMsg, error)
+	CreateMessage(ctx context.Context, in *CreateMessageRequest, opts ...grpc.CallOption) (*UuidMsg, error)
 	//Later change userUuid to use JWT info.
 	GetMessagesByConversation(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*ArrayMessageResponse, error)
 	UpdateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageMsgResponse, error)
-	CreateUserConversation(ctx context.Context, in *UserConversation, opts ...grpc.CallOption) (*UuidMsg, error)
+	CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*UuidMsg, error)
 }
 
 type messagingProtoInterfaceClient struct {
@@ -65,7 +65,7 @@ func (c *messagingProtoInterfaceClient) UpdateConversationInfo(ctx context.Conte
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*UuidMsg, error) {
+func (c *messagingProtoInterfaceClient) CreateMessage(ctx context.Context, in *CreateMessageRequest, opts ...grpc.CallOption) (*UuidMsg, error) {
 	out := new(UuidMsg)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/CreateMessage", in, out, opts...)
 	if err != nil {
@@ -92,7 +92,7 @@ func (c *messagingProtoInterfaceClient) UpdateMessage(ctx context.Context, in *M
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) CreateUserConversation(ctx context.Context, in *UserConversation, opts ...grpc.CallOption) (*UuidMsg, error) {
+func (c *messagingProtoInterfaceClient) CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*UuidMsg, error) {
 	out := new(UuidMsg)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/CreateUserConversation", in, out, opts...)
 	if err != nil {
@@ -110,11 +110,11 @@ type MessagingProtoInterfaceServer interface {
 	//Later should be fetched directly through JWT info.
 	GetConversationsByUser(context.Context, *Uuid) (*ArrayConversationResponse, error)
 	UpdateConversationInfo(context.Context, *Conversation) (*UpdateConversationResponse, error)
-	CreateMessage(context.Context, *Message) (*UuidMsg, error)
+	CreateMessage(context.Context, *CreateMessageRequest) (*UuidMsg, error)
 	//Later change userUuid to use JWT info.
 	GetMessagesByConversation(context.Context, *MessageRequest) (*ArrayMessageResponse, error)
 	UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error)
-	CreateUserConversation(context.Context, *UserConversation) (*UuidMsg, error)
+	CreateUserConversation(context.Context, *CreateUserConversationRequest) (*UuidMsg, error)
 	mustEmbedUnimplementedMessagingProtoInterfaceServer()
 }
 
@@ -131,7 +131,7 @@ func (UnimplementedMessagingProtoInterfaceServer) GetConversationsByUser(context
 func (UnimplementedMessagingProtoInterfaceServer) UpdateConversationInfo(context.Context, *Conversation) (*UpdateConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateConversationInfo not implemented")
 }
-func (UnimplementedMessagingProtoInterfaceServer) CreateMessage(context.Context, *Message) (*UuidMsg, error) {
+func (UnimplementedMessagingProtoInterfaceServer) CreateMessage(context.Context, *CreateMessageRequest) (*UuidMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMessage not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) GetMessagesByConversation(context.Context, *MessageRequest) (*ArrayMessageResponse, error) {
@@ -140,7 +140,7 @@ func (UnimplementedMessagingProtoInterfaceServer) GetMessagesByConversation(cont
 func (UnimplementedMessagingProtoInterfaceServer) UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMessage not implemented")
 }
-func (UnimplementedMessagingProtoInterfaceServer) CreateUserConversation(context.Context, *UserConversation) (*UuidMsg, error) {
+func (UnimplementedMessagingProtoInterfaceServer) CreateUserConversation(context.Context, *CreateUserConversationRequest) (*UuidMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUserConversation not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) mustEmbedUnimplementedMessagingProtoInterfaceServer() {
@@ -212,7 +212,7 @@ func _MessagingProtoInterface_UpdateConversationInfo_Handler(srv interface{}, ct
 }
 
 func _MessagingProtoInterface_CreateMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
+	in := new(CreateMessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func _MessagingProtoInterface_CreateMessage_Handler(srv interface{}, ctx context
 		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/CreateMessage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).CreateMessage(ctx, req.(*Message))
+		return srv.(MessagingProtoInterfaceServer).CreateMessage(ctx, req.(*CreateMessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -266,7 +266,7 @@ func _MessagingProtoInterface_UpdateMessage_Handler(srv interface{}, ctx context
 }
 
 func _MessagingProtoInterface_CreateUserConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserConversation)
+	in := new(CreateUserConversationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func _MessagingProtoInterface_CreateUserConversation_Handler(srv interface{}, ct
 		FullMethod: "/flydev_chat_app_messaging.MessagingProtoInterface/CreateUserConversation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagingProtoInterfaceServer).CreateUserConversation(ctx, req.(*UserConversation))
+		return srv.(MessagingProtoInterfaceServer).CreateUserConversation(ctx, req.(*CreateUserConversationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

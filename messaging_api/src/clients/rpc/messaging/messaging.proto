@@ -13,13 +13,13 @@ package flydev_chat_app_messaging;
 
         rpc UpdateConversationInfo(Conversation) returns (UpdateConversationResponse) {}
         
-        
-        rpc CreateMessage(Message) returns (UuidMsg) {}
+
+        rpc CreateMessage(CreateMessageRequest) returns (UuidMsg) {}
         //Later change userUuid to use JWT info.
         rpc GetMessagesByConversation(MessageRequest) returns (ArrayMessageResponse) {}
         rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
         
-        rpc CreateUserConversation(UserConversation) returns (UuidMsg) {}
+        rpc CreateUserConversation(CreateUserConversationRequest) returns (UuidMsg) {}
  }
      //  mensaje - post- productor de eventos- llama a kafka - 
 
@@ -35,9 +35,7 @@ package flydev_chat_app_messaging;
 }
 
 message UserConversation{
-    Uuid uuid =1;
     Uuid user_uuid =2;
-    Uuid conversation_uuid=3;
     Uuid last_access_uuid = 4;
     float created_at =5;
 }
@@ -63,6 +61,11 @@ message ArrayConversationResponse{
     Svr_msg msg =2;
 }
 
+message CreateUserConversationRequest{
+    Uuid conversation_uuid =1;
+    repeated UserConversation user_conversations =2;
+}
+
 // ----------
 // Messages
 message Message{
@@ -72,6 +75,12 @@ message Message{
     string text=4;
     float created_at=5;
     float updated_at=6;
+}
+
+message CreateMessageRequest{
+    Message Message =1;
+    bool  ConversationExists =3;
+    ConversationAndParticipants NewConvo=4;
 }
 
 message MessageRequest{

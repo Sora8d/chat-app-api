@@ -16,6 +16,7 @@ type DbClient interface {
 	Execute(string, ...interface{}) error
 	Insert(string, ...interface{}) pgx.Row
 	Transaction() (pgx.Tx, error)
+	Copy(string, []string, [][]interface{}) error
 }
 
 type dbclient struct {
@@ -60,4 +61,9 @@ func (dbcl dbclient) Insert(query string, args ...interface{}) pgx.Row {
 
 func (dbcl dbclient) Transaction() (pgx.Tx, error) {
 	return dbcl.conn.Begin(context.Background())
+}
+
+func (dbcl dbclient) Copy(identifier string, columns []string, rows [][]interface{}) error {
+	_, err := dbcl.conn.CopyFrom(context.Background(), pgx.Identifier{identifier}, columns, pgx.CopyFromRows(rows))
+	return err
 }

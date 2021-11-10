@@ -36,9 +36,23 @@ func (mc messagingController) CreateConversation(ctx context.Context, pbc *pb.Co
 	return &Pb_response, nil
 }
 
-func (mc messagingController) CreateMessage(ctx context.Context, pbm *pb.Message) (*pb.UuidMsg, error) {
+func (mc messagingController) CreateMessage(ctx context.Context, pbm *pb.CreateMessageRequest) (*pb.UuidMsg, error) {
+	var err server_message.Svr_message
+	var result *pb.ConversationAndParticipants
+	for !pbm.ConversationExists {
+		data := conversation.ConversationAndParticipants{}
+		data.Poblate(false, pbm.NewConvo)
+		convo_uuid, msg := mc.svc.CreateConversation(data.Conversation)
+		if msg.GetStatus() != 200 {
+			err = msg
+			break
+		}
+		data.UserConversation.ConversationUuid = convo_uuid.Uuid
+		ucs := conversation.CreateUserConversationRequest{}
+		ucs.Ucs = data.Participants
+	}
 	var new_message message.Message
-	new_message.Poblate(false, pbm)
+	new_message.Poblate(false, pbm.Message)
 	result_uuid, resp_msg := mc.svc.CreateMessage(new_message)
 
 	var Pb_response pb.UuidMsg

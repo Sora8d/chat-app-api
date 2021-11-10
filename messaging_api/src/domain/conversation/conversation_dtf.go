@@ -32,21 +32,13 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 
 func (uc *UserConversation) Poblate(direction_out bool, cpb *pb.UserConversation) {
 	if direction_out {
-		uuid := pb.Uuid{Uuid: uc.Uuid}
-		cpb.Uuid = &uuid
 		userUuid := pb.Uuid{Uuid: uc.UserUuid}
 		cpb.UserUuid = &userUuid
-		conversationUuid := pb.Uuid{Uuid: uc.ConversationUuid}
-		cpb.ConversationUuid = &conversationUuid
 		last_accessUuid := pb.Uuid{Uuid: uc.LastAccessUuid}
 		cpb.LastAccessUuid = &last_accessUuid
 		cpb.CreatedAt = uc.CreatedAt
 	} else {
-		if cpb.Uuid != nil {
-			uc.Uuid = cpb.Uuid.Uuid
-		}
 		uc.UserUuid = cpb.UserUuid.Uuid
-		uc.ConversationUuid = cpb.ConversationUuid.Uuid
 		if cpb.LastAccessUuid != nil {
 			uc.LastAccessUuid = cpb.LastAccessUuid.Uuid
 		}
@@ -54,7 +46,7 @@ func (uc *UserConversation) Poblate(direction_out bool, cpb *pb.UserConversation
 	}
 }
 
-func (cr *ConversationResponse) Poblate(direction_out bool, pbacr *pb.ConversationAndParticipants) {
+func (cr *ConversationAndParticipants) Poblate(direction_out bool, pbacr *pb.ConversationAndParticipants) {
 	if direction_out {
 		pb_convo := pb.Conversation{}
 		pb_user_conversation := pb.UserConversation{}
@@ -80,5 +72,13 @@ func (cr *ConversationResponse) Poblate(direction_out bool, pbacr *pb.Conversati
 			cr.Participants = append(cr.Participants, participant)
 		}
 		return
+	}
+}
+
+func (cucr *CreateUserConversationRequest) Poblate(pbacr []*pb.UserConversation) {
+	for _, pb_participant := range pbacr {
+		participant := UserConversation{}
+		participant.Poblate(false, pb_participant)
+		cucr.Ucs = append(cucr.Ucs, participant)
 	}
 }

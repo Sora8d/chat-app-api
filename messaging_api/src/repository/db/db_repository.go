@@ -34,10 +34,10 @@ const (
 
 type MessagingDBRepository interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
-	CreateUserConversation(conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message)
+	CreateUserConversation(conversation.CreateUserConversationRequest) server_message.Svr_message
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
 
-	GetConversationsByUser(string) ([]conversation.ConversationResponse, server_message.Svr_message)
+	GetConversationsByUser(string) ([]conversation.ConversationAndParticipants, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 
@@ -67,16 +67,16 @@ func (dbr *messagingDBRepository) CreateConversation(convo conversation.Conversa
 	}
 	return &uuid, nil
 }
-func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]conversation.ConversationResponse, server_message.Svr_message) {
+func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]conversation.ConversationAndParticipants, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	rows, err := dbclient.Query(queryGetConversationsFromUser, user_uuid)
 	if err != nil {
 		logger.Error("error in GetConversationsByUser function, in the query execution", err)
 		return nil, server_message.NewInternalError()
 	}
-	var array_convos_response []conversation.ConversationResponse
+	var array_convos_response []conversation.ConversationAndParticipants
 	for rows.Next() {
-		convo_response := conversation.ConversationResponse{}
+		convo_response := conversation.ConversationAndParticipants{}
 		convo := conversation.Conversation{}
 		uc := conversation.UserConversation{}
 		if err := rows.Scan(&convo.Id, &convo.Uuid, &convo.TwilioSid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl,
@@ -166,15 +166,17 @@ func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*mess
 	return &result, nil
 }
 
-func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message) {
+func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.CreateUserConversationRequest) server_message.Svr_message {
 	dbclient := postgresql.GetSession()
-	row := dbclient.QueryRow(queryCreateUserConversation, convo.UserId, convo.UserUuid, convo.ConversationId, convo.ConversationUuid, convo.TwilioSid)
-	uuid := uuids.Uuid{}
-	if err := row.Scan(&uuid.Uuid); err != nil {
-		logger.Error("error creating user_conversation", err)
-		return nil, server_message.NewInternalError()
+	rows := [][]interface{}{}
+	for _, uc := range convo.Ucs {
+		rows = append(rows, []interface{}{uc.UserId, uc.UserUuid, convo.Conversation.Id, convo.Conversation.Uuid, uc.TwilioSid})
 	}
-	return &uuid, nil
+	if err := dbclient.Copy("user_conversation", []string{"user_id", "user_uuid", "conversation_id", "conversation_uuid", "twilio_sid"}, rows); err != nil {
+		logger.Error("error at CreateUserConversation", err)
+		return server_message.NewInternalError()
+	}
+	return nil
 }
 
 func (dbr *messagingDBRepository) getUserConversationsForConversation(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {

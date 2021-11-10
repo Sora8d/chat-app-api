@@ -30,10 +30,15 @@ type UserConversation struct {
 	CreatedAt        float32 `json:"created_at"`
 }
 
-type ConversationResponse struct {
+type ConversationAndParticipants struct {
 	Conversation `json:"conversation"`
 	UserConversation
 	Participants []UserConversation `json:"participants"`
+}
+
+type CreateUserConversationRequest struct {
+	Ucs          []UserConversation `json:"ucs"`
+	Conversation Conversation       `json:"conversation"`
 }
 
 //Later youll have to do validations

@@ -17,7 +17,7 @@ type MessagingService interface {
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
 	CreateUserConversation(conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message)
 
-	GetConversationsByUser(string) ([]conversation.ConversationResponse, server_message.Svr_message)
+	GetConversationsByUser(string) ([]conversation.ConversationAndParticipants, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
@@ -109,7 +109,7 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.UserCo
 
 //
 
-func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversation.ConversationResponse, server_message.Svr_message) {
+func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversation.ConversationAndParticipants, server_message.Svr_message) {
 	conversations, err := ms.dbrepo.GetConversationsByUser(user_uuid)
 	if err != nil {
 		return nil, err
