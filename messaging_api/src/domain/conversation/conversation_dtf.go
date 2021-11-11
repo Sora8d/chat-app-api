@@ -32,12 +32,17 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 
 func (uc *UserConversation) Poblate(direction_out bool, cpb *pb.UserConversation) {
 	if direction_out {
+		Uuid := pb.Uuid{Uuid: uc.Uuid}
+		cpb.Uuid = &Uuid
 		userUuid := pb.Uuid{Uuid: uc.UserUuid}
 		cpb.UserUuid = &userUuid
 		last_accessUuid := pb.Uuid{Uuid: uc.LastAccessUuid}
 		cpb.LastAccessUuid = &last_accessUuid
 		cpb.CreatedAt = uc.CreatedAt
 	} else {
+		if cpb.Uuid != nil {
+			uc.Uuid = cpb.Uuid.Uuid
+		}
 		uc.UserUuid = cpb.UserUuid.Uuid
 		if cpb.LastAccessUuid != nil {
 			uc.LastAccessUuid = cpb.LastAccessUuid.Uuid
@@ -65,7 +70,9 @@ func (cr *ConversationAndParticipants) Poblate(direction_out bool, pbacr *pb.Con
 		return
 	} else {
 		cr.Conversation.Poblate(direction_out, pbacr.Conversation)
-		cr.UserConversation.Poblate(direction_out, pbacr.UserConversation)
+		if pbacr.UserConversation != nil {
+			cr.UserConversation.Poblate(direction_out, pbacr.UserConversation)
+		}
 		for _, pb_participant := range pbacr.Participants {
 			participant := UserConversation{}
 			participant.Poblate(direction_out, pb_participant)

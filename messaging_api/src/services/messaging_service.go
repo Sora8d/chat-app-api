@@ -15,7 +15,7 @@ import (
 type MessagingService interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
-	CreateUserConversation(conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message)
+	CreateUserConversation(conversation.CreateUserConversationRequest) server_message.Svr_message
 
 	GetConversationsByUser(string) ([]conversation.ConversationAndParticipants, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
@@ -77,34 +77,35 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 		return nil, err
 	}
 
-	return uuid, server_message.NewCustomMessage(http.StatusOK, "message created")
+	conversationUuid := uuids.Uuid{Uuid: msg.ConversationUuid}
+	return &conversationUuid, server_message.NewCustomMessage(http.StatusOK, "message created")
 }
-func (ms *messagingService) CreateUserConversation(userconvo conversation.UserConversation) (*uuids.Uuid, server_message.Svr_message) {
-	//Validation
-	user, response_msg := ms.proto_users.GetUser(userconvo.UserUuid)
+func (ms *messagingService) CreateUserConversation(userconvo conversation.CreateUserConversationRequest) server_message.Svr_message {
+	convo, response_msg := ms.GetConversationByUuid(userconvo.Conversation.Uuid)
 	if response_msg.GetStatus() != 200 {
-		return nil, response_msg
+		return response_msg
 	}
-	userconvo.UserId = user.Id
+	userconvo.Conversation.Id = convo.Id
 
-	convo, response_msg := ms.GetConversationByUuid(userconvo.ConversationUuid)
-	if response_msg.GetStatus() != 200 {
-		return nil, response_msg
+	for i, uc := range userconvo.Ucs {
+		user, response_msg := ms.proto_users.GetUser(uc.UserUuid)
+		if response_msg.GetStatus() != 200 {
+			return response_msg
+		}
+		userconvo.Ucs[i].UserId = user.Id
+		//Twilio---
+		sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, uc.UserUuid)
+		if err != nil {
+			return err
+		}
+		userconvo.Ucs[i].TwilioSid = *sid
+		//---
 	}
-	userconvo.ConversationId = convo.Id
-	//---
-	//Twilio---
-	sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, userconvo.UserUuid)
+	err := ms.dbrepo.CreateUserConversation(userconvo)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	userconvo.TwilioSid = *sid
-	//---
-	uuid, err := ms.dbrepo.CreateUserConversation(userconvo)
-	if err != nil {
-		return nil, err
-	}
-	return uuid, server_message.NewCustomMessage(http.StatusOK, "user_conversation created")
+	return server_message.NewCustomMessage(http.StatusOK, "user_conversation created")
 }
 
 //

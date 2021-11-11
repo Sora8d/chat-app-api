@@ -1,6 +1,8 @@
 package db
 
 import (
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/flydevs/chat-app-api/common/logger"
 	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/clients/postgresql"
@@ -31,6 +33,12 @@ const (
 	queryGetUserConversationForConversation = "SELECT uc.id, uc.uuid, uc.twilio_sid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at) FROM user_conversation uc JOIN conversation c ON uc.conversation_id = c.id WHERE c.uuid=$1;"
 	queryUserConversationUpdateLastAccess   = "UPDATE user_conversation SET last_access_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_access_uuid;"
 )
+
+var GoquDialect goqu.DialectWrapper
+
+func init() {
+	GoquDialect = goqu.Dialect("postgres")
+}
 
 type MessagingDBRepository interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
@@ -168,11 +176,17 @@ func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*mess
 
 func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.CreateUserConversationRequest) server_message.Svr_message {
 	dbclient := postgresql.GetSession()
-	rows := [][]interface{}{}
+	var rows [][]interface{}
 	for _, uc := range convo.Ucs {
-		rows = append(rows, []interface{}{uc.UserId, uc.UserUuid, convo.Conversation.Id, convo.Conversation.Uuid, uc.TwilioSid})
+		rows = append(rows, goqu.Vals{uc.UserId, uc.UserUuid, convo.Conversation.Id, convo.Conversation.Uuid, uc.TwilioSid})
 	}
-	if err := dbclient.Copy("user_conversation", []string{"user_id", "user_uuid", "conversation_id", "conversation_uuid", "twilio_sid"}, rows); err != nil {
+	queryvals := GoquDialect.Insert("user_conversation").Cols("user_id", "user_uuid", "conversation_id", "conversation_uuid", "twilio_sid").Vals(rows...)
+	query, _, err := queryvals.ToSQL()
+	if err != nil {
+		logger.Error("error at CreateUserConversation", err)
+		return server_message.NewInternalError()
+	}
+	if err := dbclient.Execute(query); err != nil {
 		logger.Error("error at CreateUserConversation", err)
 		return server_message.NewInternalError()
 	}

@@ -35,6 +35,7 @@ package flydev_chat_app_messaging;
 }
 
 message UserConversation{
+    Uuid uuid =1;
     Uuid user_uuid =2;
     Uuid last_access_uuid = 4;
     float created_at =5;
@@ -51,10 +52,6 @@ message UpdateConversationResponse{
     Svr_msg msg=2;
 }
 
-message GetConversationResponse{
-    ConversationAndParticipants conversation =1;
-    Svr_msg msg =2;
-}
 
 message ArrayConversationResponse{
     repeated ConversationAndParticipants conversations = 1;
@@ -110,8 +107,4 @@ message Svr_msg{
 message UuidMsg{
     Uuid uuid =1;
     Svr_msg msg=2;
-}
-message UuidandMessageUuid{
-    Uuid og_entity =1;
-    Uuid message =2;
 }
