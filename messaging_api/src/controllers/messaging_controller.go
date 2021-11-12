@@ -51,8 +51,8 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 			return nil, err
 		}
 		ucs := conversation.CreateUserConversationRequest{}
-		ucs.Ucs = data.Participants
-		ucs.Conversation.Uuid = convo_uuid.Uuid
+		ucs.SetUserConversationSlice(data.Participants)
+		ucs.SetConversation(conversation.Conversation{Uuid: convo_uuid.Uuid})
 		err = mc.svc.CreateUserConversation(ucs)
 		if err != nil {
 			return nil, err
@@ -63,7 +63,7 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 	var new_message message.Message
 	new_message.Poblate(false, pbm.Message)
 	if new_message.ConversationUuid == "" {
-		new_message.ConversationUuid = conversation_uuid.Uuid
+		new_message.SetConversationUuid(conversation_uuid.Uuid)
 	}
 
 	result_conversation_uuid, err := mc.svc.CreateMessage(new_message)
@@ -78,7 +78,7 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 func (mc messagingController) CreateUserConversation(ctx context.Context, pbuc *proto_messaging.CreateUserConversationRequest) server_message.Svr_message {
 	var new_user_conversation conversation.CreateUserConversationRequest
 	new_user_conversation.Poblate(pbuc.UserConversations)
-	new_user_conversation.Conversation.Uuid = pbuc.ConversationUuid.Uuid
+	new_user_conversation.SetConversation(conversation.Conversation{Uuid: pbuc.ConversationUuid.Uuid})
 	err := mc.svc.CreateUserConversation(new_user_conversation)
 	return err
 }
@@ -90,12 +90,7 @@ func (mc messagingController) GetConversationsByUser(ctx context.Context, proto_
 	if err != nil {
 		return nil, err
 	}
-	var proto_conversation_participants []*proto_messaging.ConversationAndParticipants
-	for _, content := range conversation_participants {
-		var new_pb_convo proto_messaging.ConversationAndParticipants
-		content.Poblate(true, &new_pb_convo)
-		proto_conversation_participants = append(proto_conversation_participants, &new_pb_convo)
-	}
+	proto_conversation_participants := conversation_participants.Poblate(nil)
 	return proto_conversation_participants, nil
 }
 
@@ -106,12 +101,7 @@ func (mc messagingController) GetMessagesByConversation(ctx context.Context, pbu
 	if err != nil {
 		return nil, err
 	}
-	var proto_messages []*proto_messaging.Message
-	for _, content := range messages {
-		var new_pb_message proto_messaging.Message
-		content.Poblate(true, &new_pb_message)
-		proto_messages = append(proto_messages, &new_pb_message)
-	}
+	proto_messages := messages.Poblate(nil)
 	return proto_messages, nil
 }
 

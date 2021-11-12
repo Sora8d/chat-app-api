@@ -15,11 +15,11 @@ type MessagingService interface {
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
 	CreateUserConversation(conversation.CreateUserConversationRequest) server_message.Svr_message
 
-	GetConversationsByUser(string) ([]conversation.ConversationAndParticipants, server_message.Svr_message)
+	GetConversationsByUser(string) (conversation.ConversationAndParticipantsSlice, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
-	GetMessagesByConversation(string, string) ([]message.Message, server_message.Svr_message)
+	GetMessagesByConversation(string, string) (message.MessageSlice, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
 }
 type messagingService struct {
@@ -38,7 +38,7 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	if err != nil {
 		return nil, err
 	}
-	convo.TwilioSid = *sid
+	convo.SetTwilioSid(*sid)
 	//---
 	uuid, err := ms.dbrepo.CreateConversation(convo)
 	if err != nil {
@@ -47,23 +47,23 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	return uuid, nil
 }
 func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
-	user, response_msg := ms.proto_users.GetUser(msg.AuthorUuid)
-	if response_msg.GetStatus() != 200 {
-		return nil, response_msg
+	user, err := ms.proto_users.GetUser(msg.AuthorUuid)
+	if err != nil {
+		return nil, err
 	}
-	msg.AuthorId = user.Id
+	msg.SetAuthorId(user.Id)
 
 	convo, err := ms.GetConversationByUuid(msg.ConversationUuid)
 	if err != nil {
 		return nil, err
 	}
-	msg.ConversationId = convo.Id
+	msg.SetConversationId(convo.Id)
 	//Twilio---
 	sid, err := ms.twiorepo.CreateMessage(convo.TwilioSid, msg)
 	if err != nil {
 		return nil, err
 	}
-	msg.TwilioSid = *sid
+	msg.SetTwilioSid(*sid)
 	//---
 	uuid, err := ms.dbrepo.CreateMessage(msg)
 	if err != nil {
@@ -83,20 +83,20 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.Create
 	if err != nil {
 		return err
 	}
-	userconvo.Conversation.Id = convo.Id
+	userconvo.SetConversation(*convo)
 
-	for i, uc := range userconvo.Ucs {
-		user, response_msg := ms.proto_users.GetUser(uc.UserUuid)
-		if response_msg.GetStatus() != 200 {
-			return response_msg
+	for i, uc := range userconvo.UserConversationSlice {
+		user, err := ms.proto_users.GetUser(uc.UserUuid)
+		if err != nil {
+			return err
 		}
-		userconvo.Ucs[i].UserId = user.Id
+		userconvo.UserConversationSlice[i].SetUserId(user.Id)
 		//Twilio---
 		sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, uc.UserUuid)
 		if err != nil {
 			return err
 		}
-		userconvo.Ucs[i].TwilioSid = *sid
+		userconvo.UserConversationSlice[i].SetTwilioSid(*sid)
 		//---
 	}
 	err = ms.dbrepo.CreateUserConversation(userconvo)
@@ -108,7 +108,7 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.Create
 
 //
 
-func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversation.ConversationAndParticipants, server_message.Svr_message) {
+func (ms *messagingService) GetConversationsByUser(user_uuid string) (conversation.ConversationAndParticipantsSlice, server_message.Svr_message) {
 	conversations, err := ms.dbrepo.GetConversationsByUser(user_uuid)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conver
 
 //
 
-func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid string) ([]message.Message, server_message.Svr_message) {
+func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid string) (message.MessageSlice, server_message.Svr_message) {
 	messages, err := ms.dbrepo.GetMessagesByConversation(convo_uuid)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Me
 	ms.twiorepo.UpdateMessage(convo.TwilioSid, message)
 	//----
 
-	message.ConversationUuid = ""
+	message.SetConversationUuid("")
 	return message, nil
 
 }

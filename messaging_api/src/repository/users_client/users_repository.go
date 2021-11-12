@@ -28,7 +28,7 @@ type userProtoClient struct {
 	conn   *grpc.ClientConn
 }
 
-func (upc *userProtoClient) Setup() {
+func init() {
 	logger.Info(fmt.Sprintf("connecting to users_repository with address:%s", config.Config["USERS_ADDRESS"]))
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	c, err := grpc.Dial(config.Config["USERS_ADDRESS"], opts...)
@@ -36,12 +36,11 @@ func (upc *userProtoClient) Setup() {
 		panic(err)
 	}
 
-	upc.client = pb.NewUsersProtoInterfaceClient(c)
-	upc.conn = c
+	u_proto.client = pb.NewUsersProtoInterfaceClient(c)
+	u_proto.conn = c
 }
 
 func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Svr_message) {
-	upc.Setup()
 	pbuuid := pb.Uuid{Uuid: uuid}
 	ctx := context.Background()
 	user_msg_response, err := upc.client.GetUserByUuid(ctx, &pbuuid)
@@ -54,8 +53,7 @@ func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Sv
 		return nil, msg
 	}
 	user := poblateUserfromProto(user_msg_response.User)
-	upc.conn.Close()
-	return &user, msg
+	return &user, nil
 }
 
 func poblateMsgfromProto(pbmsg *pb.SvrMsg) server_message.Svr_message {

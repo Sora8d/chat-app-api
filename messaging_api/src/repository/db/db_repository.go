@@ -177,7 +177,7 @@ func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*mess
 func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.CreateUserConversationRequest) server_message.Svr_message {
 	dbclient := postgresql.GetSession()
 	var rows [][]interface{}
-	for _, uc := range convo.Ucs {
+	for _, uc := range convo.UserConversationSlice {
 		rows = append(rows, goqu.Vals{uc.UserId, uc.UserUuid, convo.Conversation.Id, convo.Conversation.Uuid, uc.TwilioSid})
 	}
 	queryvals := GoquDialect.Insert("user_conversation").Cols("user_id", "user_uuid", "conversation_id", "conversation_uuid", "twilio_sid").Vals(rows...)

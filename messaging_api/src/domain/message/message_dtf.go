@@ -30,3 +30,13 @@ func (ms *Message) Poblate(direction_out bool, mpb *pb.Message) {
 		ms.UpdatedAt = mpb.UpdatedAt
 	}
 }
+
+func (mss MessageSlice) Poblate(mps []*pb.Message) []*pb.Message {
+	var object_to_return []*pb.Message
+	for _, content := range mss {
+		var new_pb_message pb.Message
+		content.Poblate(true, &new_pb_message)
+		object_to_return = append(object_to_return, &new_pb_message)
+	}
+	return object_to_return
+}

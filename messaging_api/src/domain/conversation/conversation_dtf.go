@@ -51,41 +51,56 @@ func (uc *UserConversation) Poblate(direction_out bool, cpb *pb.UserConversation
 	}
 }
 
+//These return slices because slices are already pointers, and having a pointer to a pointer seems messy.
+func (ucs *UserConverstionSlice) Poblate(direction_out bool, cpb []*pb.UserConversation) []*pb.UserConversation {
+	if direction_out {
+		var object_to_return []*pb.UserConversation
+		for _, participant := range *ucs {
+			pb_participant := pb.UserConversation{}
+			participant.Poblate(true, &pb_participant)
+			object_to_return = append(object_to_return, &pb_participant)
+		}
+		return object_to_return
+	} else {
+		for _, pb_participant := range cpb {
+			participant := UserConversation{}
+			participant.Poblate(false, pb_participant)
+			*ucs = append(*ucs, participant)
+		}
+		return nil
+	}
+}
+func (cps *ConversationAndParticipantsSlice) Poblate(pbcps []*pb.ConversationAndParticipants) []*pb.ConversationAndParticipants {
+	var object_to_return []*pb.ConversationAndParticipants
+	for _, content := range *cps {
+		var new_pb_convo pb.ConversationAndParticipants
+		content.Poblate(true, &new_pb_convo)
+		object_to_return = append(object_to_return, &new_pb_convo)
+	}
+	return object_to_return
+}
+
 func (cr *ConversationAndParticipants) Poblate(direction_out bool, pbacr *pb.ConversationAndParticipants) {
 	if direction_out {
 		pb_convo := pb.Conversation{}
 		pb_user_conversation := pb.UserConversation{}
-		pb_participants := []*pb.UserConversation{}
 
 		cr.Conversation.Poblate(direction_out, &pb_convo)
 		cr.UserConversation.Poblate(direction_out, &pb_user_conversation)
-		for _, participant := range cr.Participants {
-			pb_participant := pb.UserConversation{}
-			participant.Poblate(direction_out, &pb_participant)
-			pb_participants = append(pb_participants, &pb_participant)
-		}
 		pbacr.Conversation = &pb_convo
 		pbacr.UserConversation = &pb_user_conversation
-		pbacr.Participants = pb_participants
+		pbacr.Participants = cr.Participants.Poblate(true, nil)
 		return
 	} else {
 		cr.Conversation.Poblate(direction_out, pbacr.Conversation)
 		if pbacr.UserConversation != nil {
 			cr.UserConversation.Poblate(direction_out, pbacr.UserConversation)
 		}
-		for _, pb_participant := range pbacr.Participants {
-			participant := UserConversation{}
-			participant.Poblate(direction_out, pb_participant)
-			cr.Participants = append(cr.Participants, participant)
-		}
+		cr.Participants.Poblate(false, pbacr.Participants)
 		return
 	}
 }
 
-func (cucr *CreateUserConversationRequest) Poblate(pbacr []*pb.UserConversation) {
-	for _, pb_participant := range pbacr {
-		participant := UserConversation{}
-		participant.Poblate(false, pb_participant)
-		cucr.Ucs = append(cucr.Ucs, participant)
-	}
+func (cucr *CreateUserConversationRequest) Poblate(cpb []*pb.UserConversation) {
+	cucr.UserConversationSlice.Poblate(false, cpb)
 }

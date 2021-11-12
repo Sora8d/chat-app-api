@@ -124,7 +124,7 @@ func TestCreateGetConversationExternal(t *testing.T) {
 		t.Error(msg)
 		return
 	}
-	UCS := conversation.CreateUserConversationRequest{Ucs: []conversation.UserConversation{UC1}}
+	UCS := conversation.CreateUserConversationRequest{UserConversationSlice: []conversation.UserConversation{UC1}}
 	UCS.Conversation.Uuid = test1.Uuid
 	msg = mess_test_service.CreateUserConversation(UCS)
 	if msg.GetStatus() != 200 {

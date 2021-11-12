@@ -11,6 +11,10 @@ type Conversation struct {
 	ConversationInfo `json:"info,omitempty"`
 }
 
+func (c *Conversation) SetTwilioSid(twilio_sid string) {
+	c.TwilioSid = twilio_sid
+}
+
 type ConversationInfo struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -30,15 +34,44 @@ type UserConversation struct {
 	CreatedAt        float32 `json:"created_at"`
 }
 
+func (uc *UserConversation) SetTwilioSid(twilio_sid string) {
+	uc.TwilioSid = twilio_sid
+}
+
+type UserConverstionSlice []UserConversation
+
+func (uc *UserConversation) SetUserId(id int64) {
+	uc.UserId = id
+}
+
 type ConversationAndParticipants struct {
 	Conversation `json:"conversation"`
 	UserConversation
-	Participants []UserConversation `json:"participants"`
+	Participants UserConverstionSlice `json:"participants"`
+}
+
+type ConversationAndParticipantsSlice []ConversationAndParticipants
+
+func (cp *ConversationAndParticipants) SetUserConversationSlice(ucs []UserConversation) {
+	cp.Participants = ucs
+}
+func (cp *ConversationAndParticipants) SetUserConversation(uc UserConversation) {
+	cp.UserConversation = uc
+}
+func (cp *ConversationAndParticipants) SetConversation(convo Conversation) {
+	cp.Conversation = convo
 }
 
 type CreateUserConversationRequest struct {
-	Ucs          []UserConversation `json:"ucs"`
-	Conversation Conversation       `json:"conversation"`
+	UserConversationSlice UserConverstionSlice `json:"user_conversation_slice"`
+	Conversation          Conversation         `json:"conversation"`
+}
+
+func (cucr *CreateUserConversationRequest) SetUserConversationSlice(ucs []UserConversation) {
+	cucr.UserConversationSlice = ucs
+}
+func (cucr *CreateUserConversationRequest) SetConversation(convo Conversation) {
+	cucr.Conversation = convo
 }
 
 //Later youll have to do validations
