@@ -1,8 +1,6 @@
 package services
 
 import (
-	"net/http"
-
 	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
@@ -46,7 +44,7 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	if err != nil {
 		return nil, err
 	}
-	return uuid, server_message.NewCustomMessage(http.StatusOK, "conversation created")
+	return uuid, nil
 }
 func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
 	user, response_msg := ms.proto_users.GetUser(msg.AuthorUuid)
@@ -55,9 +53,9 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 	}
 	msg.AuthorId = user.Id
 
-	convo, response_msg := ms.GetConversationByUuid(msg.ConversationUuid)
-	if response_msg.GetStatus() != 200 {
-		return nil, response_msg
+	convo, err := ms.GetConversationByUuid(msg.ConversationUuid)
+	if err != nil {
+		return nil, err
 	}
 	msg.ConversationId = convo.Id
 	//Twilio---
@@ -78,12 +76,12 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 	}
 
 	conversationUuid := uuids.Uuid{Uuid: msg.ConversationUuid}
-	return &conversationUuid, server_message.NewCustomMessage(http.StatusOK, "message created")
+	return &conversationUuid, nil
 }
 func (ms *messagingService) CreateUserConversation(userconvo conversation.CreateUserConversationRequest) server_message.Svr_message {
-	convo, response_msg := ms.GetConversationByUuid(userconvo.Conversation.Uuid)
-	if response_msg.GetStatus() != 200 {
-		return response_msg
+	convo, err := ms.GetConversationByUuid(userconvo.Conversation.Uuid)
+	if err != nil {
+		return err
 	}
 	userconvo.Conversation.Id = convo.Id
 
@@ -101,11 +99,11 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.Create
 		userconvo.Ucs[i].TwilioSid = *sid
 		//---
 	}
-	err := ms.dbrepo.CreateUserConversation(userconvo)
+	err = ms.dbrepo.CreateUserConversation(userconvo)
 	if err != nil {
 		return err
 	}
-	return server_message.NewCustomMessage(http.StatusOK, "user_conversation created")
+	return nil
 }
 
 //
@@ -116,7 +114,7 @@ func (ms *messagingService) GetConversationsByUser(user_uuid string) ([]conversa
 		return nil, err
 	}
 
-	return conversations, server_message.NewCustomMessage(http.StatusOK, "conversations retrieved")
+	return conversations, nil
 }
 
 func (ms *messagingService) GetConversationByUuid(uuid string) (*conversation.Conversation, server_message.Svr_message) {
@@ -124,14 +122,14 @@ func (ms *messagingService) GetConversationByUuid(uuid string) (*conversation.Co
 	if err != nil {
 		return nil, err
 	}
-	return conversation, server_message.NewCustomMessage(http.StatusOK, "conversation retrieved")
+	return conversation, nil
 }
 func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
 	convo, err := ms.dbrepo.UpdateConversationInfo(uuid, conv_info)
 	if err != nil {
 		return nil, err
 	}
-	return convo, server_message.NewCustomMessage(http.StatusOK, "conversation info updated")
+	return convo, nil
 
 }
 
@@ -147,7 +145,7 @@ func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid
 		return nil, err
 	}
 
-	return messages, server_message.NewCustomMessage(http.StatusOK, "messages retrieved")
+	return messages, nil
 }
 func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
 	message, err := ms.dbrepo.UpdateMessage(uuid, text)
@@ -155,14 +153,14 @@ func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Me
 		return nil, err
 	}
 	//Twilio
-	convo, msg := ms.GetConversationByUuid(message.ConversationUuid)
-	if msg.GetStatus() != 200 {
-		return nil, msg
+	convo, err := ms.GetConversationByUuid(message.ConversationUuid)
+	if err != nil {
+		return nil, err
 	}
 	ms.twiorepo.UpdateMessage(convo.TwilioSid, message)
 	//----
 
 	message.ConversationUuid = ""
-	return message, server_message.NewCustomMessage(http.StatusOK, "message updated")
+	return message, nil
 
 }

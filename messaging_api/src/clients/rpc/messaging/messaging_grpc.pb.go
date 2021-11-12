@@ -27,7 +27,7 @@ type MessagingProtoInterfaceClient interface {
 	//Later change userUuid to use JWT info.
 	GetMessagesByConversation(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*ArrayMessageResponse, error)
 	UpdateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageMsgResponse, error)
-	CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*UuidMsg, error)
+	CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*SvrMsg, error)
 }
 
 type messagingProtoInterfaceClient struct {
@@ -92,8 +92,8 @@ func (c *messagingProtoInterfaceClient) UpdateMessage(ctx context.Context, in *M
 	return out, nil
 }
 
-func (c *messagingProtoInterfaceClient) CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*UuidMsg, error) {
-	out := new(UuidMsg)
+func (c *messagingProtoInterfaceClient) CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*SvrMsg, error) {
+	out := new(SvrMsg)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_messaging.MessagingProtoInterface/CreateUserConversation", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ type MessagingProtoInterfaceServer interface {
 	//Later change userUuid to use JWT info.
 	GetMessagesByConversation(context.Context, *MessageRequest) (*ArrayMessageResponse, error)
 	UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error)
-	CreateUserConversation(context.Context, *CreateUserConversationRequest) (*UuidMsg, error)
+	CreateUserConversation(context.Context, *CreateUserConversationRequest) (*SvrMsg, error)
 	mustEmbedUnimplementedMessagingProtoInterfaceServer()
 }
 
@@ -140,7 +140,7 @@ func (UnimplementedMessagingProtoInterfaceServer) GetMessagesByConversation(cont
 func (UnimplementedMessagingProtoInterfaceServer) UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMessage not implemented")
 }
-func (UnimplementedMessagingProtoInterfaceServer) CreateUserConversation(context.Context, *CreateUserConversationRequest) (*UuidMsg, error) {
+func (UnimplementedMessagingProtoInterfaceServer) CreateUserConversation(context.Context, *CreateUserConversationRequest) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUserConversation not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) mustEmbedUnimplementedMessagingProtoInterfaceServer() {

@@ -19,7 +19,7 @@ package flydev_chat_app_messaging;
         rpc GetMessagesByConversation(MessageRequest) returns (ArrayMessageResponse) {}
         rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
         
-        rpc CreateUserConversation(CreateUserConversationRequest) returns (UuidMsg) {}
+        rpc CreateUserConversation(CreateUserConversationRequest) returns (SvrMsg) {}
  }
      //  mensaje - post- productor de eventos- llama a kafka - 
 
@@ -49,13 +49,13 @@ message ConversationAndParticipants{
 
 message UpdateConversationResponse{
     Conversation conversation =1;
-    Svr_msg msg=2;
+    SvrMsg msg=2;
 }
 
 
 message ArrayConversationResponse{
     repeated ConversationAndParticipants conversations = 1;
-    Svr_msg msg =2;
+    SvrMsg msg =2;
 }
 
 message CreateUserConversationRequest{
@@ -75,9 +75,9 @@ message Message{
 }
 
 message CreateMessageRequest{
-    Message Message =1;
-    bool  ConversationExists =3;
-    ConversationAndParticipants NewConvo=4;
+    Message message =1;
+    bool  conversation_exists =3;
+    ConversationAndParticipants new_convo=4;
 }
 
 message MessageRequest{
@@ -87,11 +87,11 @@ message MessageRequest{
 
 message MessageMsgResponse{
     Message message =1;
-    Svr_msg msg=2;
+    SvrMsg msg=2;
 }
 message ArrayMessageResponse{
     repeated Message message = 1;
-    Svr_msg msg=2;
+    SvrMsg msg=2;
 }
 //----
 //other
@@ -99,12 +99,12 @@ message Uuid {
     string uuid =1;
 }
 
-message Svr_msg{
+message SvrMsg{
     int64 status=1;
     string message=2;
 }
 
 message UuidMsg{
     Uuid uuid =1;
-    Svr_msg msg=2;
+    SvrMsg msg=2;
 }
