@@ -28,6 +28,13 @@ type userProtoClient struct {
 	conn   *grpc.ClientConn
 }
 
+func (upc *userProtoClient) setConnection(c *grpc.ClientConn) {
+	upc.conn = c
+}
+func (upc *userProtoClient) setClient(c pb.UsersProtoInterfaceClient) {
+	upc.client = c
+}
+
 func init() {
 	logger.Info(fmt.Sprintf("connecting to users_repository with address:%s", config.Config["USERS_ADDRESS"]))
 	opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -36,8 +43,8 @@ func init() {
 		panic(err)
 	}
 
-	u_proto.client = pb.NewUsersProtoInterfaceClient(c)
-	u_proto.conn = c
+	u_proto.setConnection(c)
+	u_proto.setClient(pb.NewUsersProtoInterfaceClient(c))
 }
 
 func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Svr_message) {
