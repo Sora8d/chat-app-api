@@ -19,7 +19,7 @@ type MessagingService interface {
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
-	GetMessagesByConversation(string, string) (message.MessageSlice, server_message.Svr_message)
+	GetMessagesByConversation(string) (message.MessageSlice, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
 }
 type messagingService struct {
@@ -47,11 +47,16 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	return uuid, nil
 }
 func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
-	user, err := ms.proto_users.GetUser(msg.AuthorUuid)
+	conversation_uuid, err := ms.getConversationUuidFromUserConversation(msg.ConversationUuid)
 	if err != nil {
 		return nil, err
 	}
-	msg.SetAuthorId(user.Id)
+	msg.ConversationUuid = conversation_uuid.Uuid
+
+	_, err = ms.proto_users.GetUser(msg.AuthorUuid)
+	if err != nil {
+		return nil, err
+	}
 
 	convo, err := ms.GetConversationByUuid(msg.ConversationUuid)
 	if err != nil {
@@ -79,6 +84,11 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 	return &conversationUuid, nil
 }
 func (ms *messagingService) CreateUserConversation(userconvo conversation.CreateUserConversationRequest) server_message.Svr_message {
+	conversation_uuid, err := ms.getConversationUuidFromUserConversation(userconvo.Conversation.Uuid)
+	if err != nil {
+		return err
+	}
+	userconvo.Conversation.Uuid = conversation_uuid.Uuid
 	convo, err := ms.GetConversationByUuid(userconvo.Conversation.Uuid)
 	if err != nil {
 		return err
@@ -124,8 +134,13 @@ func (ms *messagingService) GetConversationByUuid(uuid string) (*conversation.Co
 	}
 	return conversation, nil
 }
-func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
-	convo, err := ms.dbrepo.UpdateConversationInfo(uuid, conv_info)
+
+func (ms *messagingService) UpdateConversationInfo(user_uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
+	conversation_uuid, err := ms.getConversationUuidFromUserConversation(user_uuid)
+	if err != nil {
+		return nil, err
+	}
+	convo, err := ms.dbrepo.UpdateConversationInfo(conversation_uuid.Uuid, conv_info)
 	if err != nil {
 		return nil, err
 	}
@@ -135,12 +150,16 @@ func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conver
 
 //
 
-func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid string) (message.MessageSlice, server_message.Svr_message) {
-	messages, err := ms.dbrepo.GetMessagesByConversation(convo_uuid)
+func (ms *messagingService) GetMessagesByConversation(user_uuid string) (message.MessageSlice, server_message.Svr_message) {
+	conversation_uuid, err := ms.getConversationUuidFromUserConversation(user_uuid)
 	if err != nil {
 		return nil, err
 	}
-	_, err = ms.dbrepo.UserConversationUpdateLastAccess(uc_uuid, messages[len(messages)-1].Uuid)
+	messages, err := ms.dbrepo.GetMessagesByConversation(conversation_uuid.Uuid)
+	if err != nil {
+		return nil, err
+	}
+	_, err = ms.dbrepo.UserConversationUpdateLastAccess(user_uuid, messages[len(messages)-1].Uuid)
 	if err != nil {
 		return nil, err
 	}
@@ -163,4 +182,13 @@ func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Me
 	message.SetConversationUuid("")
 	return message, nil
 
+}
+
+func (ms *messagingService) getConversationUuidFromUserConversation(uuid string) (*uuids.Uuid, server_message.Svr_message) {
+	uc, err := ms.dbrepo.GetUserConversationByUuid(uuid)
+	if err != nil {
+		return nil, err
+	}
+	result := uuids.Uuid{Uuid: uc.ConversationUuid}
+	return &result, nil
 }

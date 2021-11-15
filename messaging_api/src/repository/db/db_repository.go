@@ -25,7 +25,7 @@ const (
 	queryConversationUpdateInfo    = "UPDATE conversation SET name=$2, description=$3, avatar_url=$4 WHERE uuid=$1 RETURNING uuid, name, description, avatar_url;"
 	queryConversationUpdateMsgUuid = "UPDATE conversation SET last_message_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_message_uuid;"
 
-	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.twilio_sid, m.conversation_id, m.conversation_uuid, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1 ORDER BY m.created_at;"
+	queryGetMessagesByConversationUuid = "SELECT m.id, m.uuid, m.twilio_sid, m.conversation_id, m.author_id, m.author_uuid, m.body, date_part('epoch',m.created_at), date_part('epoch',m.updated_at) FROM message_table m JOIN conversation c ON m.conversation_id = c.id WHERE c.uuid=$1 ORDER BY m.created_at;"
 	queryUpdateMessage                 = "UPDATE message_table SET body=$2, updated_at=timezone('utc'::text, now()) WHERE uuid=$1 RETURNING uuid, conversation_uuid, twilio_sid, body, date_part('epoch',updated_at);"
 
 	queryGetUserConversationForUser         = "SELECT id, uuid, twilio_sid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE user_id=$1;"
@@ -103,6 +103,7 @@ func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]co
 			return nil, aErr
 		}
 		array_convos_response[index].Participants = ucs
+		array_convos_response[index].Conversation.Uuid = array_convos_response[index].UserConversation.Uuid
 	}
 	if len(array_convos_response) == 0 {
 		return nil, server_message.NewNotFoundError("no conversations where found in which this user partcipates")
@@ -151,7 +152,7 @@ func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string) ([]mess
 	msgs := []message.Message{}
 	for rows.Next() {
 		msg := message.Message{}
-		if err := rows.Scan(&msg.Id, &msg.Uuid, &msg.TwilioSid, &msg.ConversationId, &msg.ConversationUuid, &msg.AuthorId, &msg.AuthorUuid, &msg.Text, &msg.CreatedAt, &msg.UpdatedAt); err != nil {
+		if err := rows.Scan(&msg.Id, &msg.Uuid, &msg.TwilioSid, &msg.ConversationId, &msg.AuthorId, &msg.AuthorUuid, &msg.Text, &msg.CreatedAt, &msg.UpdatedAt); err != nil {
 			logger.Error("error in getmessagebyconversationid function, scanning rows", err)
 			return nil, server_message.NewInternalError()
 		}
