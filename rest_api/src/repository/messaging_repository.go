@@ -12,6 +12,13 @@ type messagingRepository struct {
 }
 
 type MessagingRepositoryInterface interface {
+	CreateMessage(context.Context, *messaging.CreateMessageRequest) (*messaging.Uuid, server_message.Svr_message)
+	CreateConversation(context.Context, *messaging.Conversation) (*messaging.Uuid, server_message.Svr_message)
+	CreateUserConversation(context.Context, *messaging.CreateUserConversationRequest) server_message.Svr_message
+	GetConversationsByUser(context.Context, *messaging.Uuid) ([]*messaging.ConversationAndParticipants, server_message.Svr_message)
+	GetMessagesByConversation(context.Context, *messaging.MessageRequest) ([]*messaging.Message, server_message.Svr_message)
+	UpdateMessage(context.Context, *messaging.Message) (*messaging.Message, server_message.Svr_message)
+	UpdateConversationInfo(context.Context, *messaging.Conversation) (*messaging.Conversation, server_message.Svr_message)
 }
 
 func GetMessagingRepository() MessagingRepositoryInterface {

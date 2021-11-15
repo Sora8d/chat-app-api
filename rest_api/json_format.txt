@@ -1,0 +1,14 @@
+-create message : 
+{"message": {"authorUuid": {"uuid":"71bcb82f-65ff-4623-bf9b-7d158ed746e6"}, "text": "sticks"}, "create_conversation": true, "newConvo": {"conversation": {"type":1}, "participants": [{"userUuid": {"uuid":"71bcb82f-65ff-4623-bf9b-7d158ed746e6"}}, {"userUuid":{"uuid":"e765f42d-28cb-4a2a-b67f-1e5441d0a6fd"}}]}} 
+-create conversation : 
+{"type": 2, "name": "testgroup1", "description": "tesgroup1 description", "avatar_url": "testgroup1avatar.com"}
+-create user_conversation : 
+{"conversation_uuid": {"uuid":"5d0bd71b-c345-49cf-9f5f-08bc5a125e7d"}, "user_conversations": [{"user_uuid": {"uuid":"71bcb82f-65ff-4623-bf9b-7d158ed746e6"}}, {"user_uuid":{"uuid":"e765f42d-28cb-4a2a-b67f-1e5441d0a6fd"}}]}
+-get conversation (by user): 
+{"uuid": "71bcb82f-65ff-4623-bf9b-7d158ed746e6"}
+-get messages (by conversation): 
+{"uc_uuid": {"uuid": "71bcb82f-65ff-4623-bf9b-7d158ed746e6"}, "conversation_uuid": {"uuid": "5d0bd71b-c345-49cf-9f5f-08bc5a125e7d"}}
+-put message : 
+{"uuid":{"uuid": "d40b9857-859b-41cd-9a46-d00dba65c4b3"}, "text": "testchange"}
+-put conversation_info: 
+{"uuid": {"uuid": "5d0bd71b-c345-49cf-9f5f-08bc5a125e7d"},"name": "testchange2", "description": "testchange2 description"}

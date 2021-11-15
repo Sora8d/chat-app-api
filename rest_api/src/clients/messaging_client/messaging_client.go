@@ -23,10 +23,11 @@ func (upc *messagingProtoClient) setClient(c proto_messaging.MessagingProtoInter
 	upc.Client = c
 }
 func init() {
-	logger.Info(fmt.Sprintf("connecting to messaging service with address: %s", config.Config["MESSAGE_ADDRESS"]))
+	logger.Info(fmt.Sprintf("connecting to messaging service with address: %s", config.Config["MESSAGING_ADDRESS"]))
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	connection, err := grpc.Dial(config.Config["MESSAGE_ADDRESS"], opts...)
+	connection, err := grpc.Dial(config.Config["MESSAGING_ADDRESS"], opts...)
 	if err != nil {
+		logger.Error("unable to connect to messaging_api", err)
 		panic(err)
 	}
 
