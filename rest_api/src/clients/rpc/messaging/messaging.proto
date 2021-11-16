@@ -1,6 +1,6 @@
 syntax= "proto3";
 
-option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/messaging";
+option go_package= "github.com/flydevs/chat-app-api/rest-api/src/clients/rpc/messaging";
 
 package flydev_chat_app_messaging;
 
@@ -76,7 +76,7 @@ message Message{
 
 message CreateMessageRequest{
     Message message =1;
-    bool  conversation_exists =3;
+    bool  create_conversation =3;
     ConversationAndParticipants new_convo=4;
 }
 

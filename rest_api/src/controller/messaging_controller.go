@@ -11,7 +11,7 @@ import (
 )
 
 type messagingController struct {
-	svs services.MessagingServiceInterface
+	msg_svs services.MessagingServiceInterface
 }
 
 type MessagingControllerInterface interface {
@@ -25,7 +25,7 @@ type MessagingControllerInterface interface {
 }
 
 func NewMessagingController(svs services.MessagingServiceInterface) MessagingControllerInterface {
-	return &messagingController{svs: svs}
+	return &messagingController{msg_svs: svs}
 }
 
 func (mc messagingController) CreateMessage(c *gin.Context) {
@@ -41,7 +41,7 @@ func (mc messagingController) CreateMessage(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.CreateMessage(&new_request)
+	result_response_object := mc.msg_svs.CreateMessage(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -59,7 +59,7 @@ func (mc messagingController) CreateConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.CreateConversation(&new_request)
+	result_response_object := mc.msg_svs.CreateConversation(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -77,7 +77,7 @@ func (mc messagingController) CreateUserConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.CreateUserConversation(&new_request)
+	result_response_object := mc.msg_svs.CreateUserConversation(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -95,7 +95,7 @@ func (mc messagingController) GetConversationsByUser(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.GetConversationsByUser(&new_request)
+	result_response_object := mc.msg_svs.GetConversationsByUser(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -113,7 +113,7 @@ func (mc messagingController) GetMessagesByConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.GetMessagesByConversation(&new_request)
+	result_response_object := mc.msg_svs.GetMessagesByConversation(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -131,7 +131,7 @@ func (mc messagingController) UpdateMessage(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.UpdateMessage(&new_request)
+	result_response_object := mc.msg_svs.UpdateMessage(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -149,7 +149,7 @@ func (mc messagingController) UpdateConversationInfo(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.svs.UpdateConversationInfo(&new_request)
+	result_response_object := mc.msg_svs.UpdateConversationInfo(&new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }

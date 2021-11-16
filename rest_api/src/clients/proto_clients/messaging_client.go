@@ -1,4 +1,4 @@
-package messaging_client
+package proto_clients
 
 import (
 	"fmt"
@@ -35,6 +35,6 @@ func init() {
 	messaging_proto_client.setClient(proto_messaging.NewMessagingProtoInterfaceClient(connection))
 }
 
-func GetMessagingClient() messagingProtoClient {
-	return messaging_proto_client
+func GetMessagingClient() *messagingProtoClient {
+	return &messaging_proto_client
 }

@@ -11,6 +11,7 @@ import (
 var Response domain.Response
 
 type messagingService struct {
+	msg_repo repository.MessagingRepositoryInterface
 }
 
 type MessagingServiceInterface interface {
@@ -23,51 +24,44 @@ type MessagingServiceInterface interface {
 	UpdateConversationInfo(*messaging.Conversation) domain.Response
 }
 
-func NewMessagingService() MessagingServiceInterface {
-	return &messagingService{}
+func NewMessagingService(msg_repo repository.MessagingRepositoryInterface) MessagingServiceInterface {
+	return &messagingService{msg_repo: msg_repo}
 }
 
 //TODO: later create context
 
 func (ms messagingService) CreateMessage(request *messaging.CreateMessageRequest) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(repository.CreateMessage(ctx, request))
+	return Response.CreateResponse(ms.msg_repo.CreateMessage(ctx, request))
 
 }
 
 func (ms messagingService) CreateConversation(request *messaging.Conversation) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(repository.CreateConversation(ctx, request))
+	return Response.CreateResponse(ms.msg_repo.CreateConversation(ctx, request))
 }
 
 func (ms messagingService) CreateUserConversation(request *messaging.CreateUserConversationRequest) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(nil, repository.CreateUserConversation(ctx, request))
+	return Response.CreateResponse(nil, ms.msg_repo.CreateUserConversation(ctx, request))
 }
 
 func (ms messagingService) GetConversationsByUser(request *messaging.Uuid) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(repository.GetConversationsByUser(ctx, request))
+	return Response.CreateResponse(ms.msg_repo.GetConversationsByUser(ctx, request))
 }
 
 func (ms messagingService) GetMessagesByConversation(request *messaging.MessageRequest) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(repository.GetMessagesByConversation(ctx, request))
+	return Response.CreateResponse(ms.msg_repo.GetMessagesByConversation(ctx, request))
 }
 
 func (ms messagingService) UpdateMessage(request *messaging.Message) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(repository.UpdateMessage(ctx, request))
+	return Response.CreateResponse(ms.msg_repo.UpdateMessage(ctx, request))
 }
 
 func (ms messagingService) UpdateConversationInfo(request *messaging.Conversation) domain.Response {
-	repository := repository.GetMessagingRepository()
 	ctx := context.Background()
-	return Response.CreateResponse(repository.UpdateConversationInfo(ctx, request))
+	return Response.CreateResponse(ms.msg_repo.UpdateConversationInfo(ctx, request))
 }
