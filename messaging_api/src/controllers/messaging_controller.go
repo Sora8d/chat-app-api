@@ -21,7 +21,7 @@ type MessagingController interface {
 	CreateMessage(context.Context, *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message)
 	CreateUserConversation(context.Context, *proto_messaging.CreateUserConversationRequest) server_message.Svr_message
 	GetConversationsByUser(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.ConversationAndParticipants, server_message.Svr_message)
-	GetMessagesByConversation(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.Message, server_message.Svr_message)
+	GetMessagesByConversation(context.Context, *proto_messaging.MessageRequest) ([]*proto_messaging.Message, server_message.Svr_message)
 	UpdateConversationInfo(context.Context, *proto_messaging.Conversation) (*proto_messaging.Conversation, server_message.Svr_message)
 	UpdateMessage(context.Context, *proto_messaging.Message) (*proto_messaging.Message, server_message.Svr_message)
 }
@@ -42,10 +42,8 @@ func (mc messagingController) CreateConversation(ctx context.Context, pbc *proto
 }
 
 func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message) {
-	var new_message message.Message
-	new_message.Poblate(false, pbm.Message)
-
-	if pbm.CreateConversation {
+	var conversation_uuid proto_messaging.Uuid
+	if !pbm.ConversationExists {
 		data := conversation.ConversationAndParticipants{}
 		data.Poblate(false, pbm.NewConvo)
 		convo_uuid, err := mc.svc.CreateConversation(data.Conversation)
@@ -59,11 +57,13 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 		if err != nil {
 			return nil, err
 		}
-		new_message.SetConversationUuid()
+		convo_uuid.Poblate(true, &conversation_uuid)
 	}
 
+	var new_message message.Message
+	new_message.Poblate(false, pbm.Message)
 	if new_message.ConversationUuid == "" {
-
+		new_message.SetConversationUuid(conversation_uuid.Uuid)
 	}
 
 	result_conversation_uuid, err := mc.svc.CreateMessage(new_message)
@@ -96,8 +96,8 @@ func (mc messagingController) GetConversationsByUser(ctx context.Context, proto_
 
 //
 
-func (mc messagingController) GetMessagesByConversation(ctx context.Context, pbuuid *proto_messaging.Uuid) ([]*proto_messaging.Message, server_message.Svr_message) {
-	messages, err := mc.svc.GetMessagesByConversation(pbuuid.Uuid)
+func (mc messagingController) GetMessagesByConversation(ctx context.Context, pbuuid *proto_messaging.MessageRequest) ([]*proto_messaging.Message, server_message.Svr_message) {
+	messages, err := mc.svc.GetMessagesByConversation(pbuuid.UcUuid.Uuid, pbuuid.ConversationUuid.Uuid)
 	if err != nil {
 		return nil, err
 	}
