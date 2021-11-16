@@ -76,7 +76,7 @@ message Message{
 
 message CreateMessageRequest{
     Message message =1;
-    bool  conversation_exists =3;
+    bool  create_conversation =3;
     ConversationAndParticipants new_convo=4;
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/uuids"
 )
 
+//queries
 const (
 	queryInsertConversation     = "INSERT INTO conversation(type, name, description, avatar_url, twilio_sid) VALUES ($1,$2,$3,$4,$5) RETURNING uuid;"
 	queryCreateUserConversation = "INSERT INTO user_conversation(user_id, user_uuid, conversation_id, conversation_uuid, twilio_sid) VALUES($1, $2, $3, $4, $5) RETURNING uuid;"
@@ -32,6 +33,11 @@ const (
 	queryGetUserConversationByUuid          = "SELECT id, uuid, twilio_sid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE uuid=$1;"
 	queryGetUserConversationForConversation = "SELECT uc.id, uc.uuid, uc.twilio_sid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at) FROM user_conversation uc JOIN conversation c ON uc.conversation_id = c.id WHERE c.uuid=$1;"
 	queryUserConversationUpdateLastAccess   = "UPDATE user_conversation SET last_access_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_access_uuid;"
+)
+
+//errors
+const (
+	errNoRows = "no rows in result set"
 )
 
 var GoquDialect goqu.DialectWrapper
@@ -219,6 +225,9 @@ func (dbr *messagingDBRepository) GetUserConversationByUuid(uuid string) (*conve
 	row := dbclient.QueryRow(queryGetUserConversationByUuid, uuid)
 	uc := conversation.UserConversation{}
 	if err := row.Scan(&uc.Id, &uc.Uuid, &uc.TwilioSid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
+		if err.Error() == errNoRows {
+			return nil, server_message.NewNotFoundError("not found")
+		}
 		logger.Error("error in GetUserConversationByUuid function", err)
 		return nil, server_message.NewInternalError()
 	}
@@ -230,6 +239,9 @@ func (dbr *messagingDBRepository) UserConversationUpdateLastAccess(uuid string, 
 	row := dbclient.QueryRow(queryUserConversationUpdateLastAccess, uuid, msg_uuid)
 	result := conversation.UserConversation{}
 	if err := row.Scan(&result.Uuid, &result.LastAccessUuid); err != nil {
+		if err.Error() == errNoRows {
+			return nil, server_message.NewNotFoundError("not found")
+		}
 		logger.Error("error at UserConversationUpdateLastAccess", err)
 		return nil, server_message.NewInternalError()
 	}

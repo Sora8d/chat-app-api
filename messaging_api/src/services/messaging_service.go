@@ -142,6 +142,9 @@ func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid
 	}
 	_, err = ms.dbrepo.UserConversationUpdateLastAccess(uc_uuid, messages[len(messages)-1].Uuid)
 	if err != nil {
+		if err.GetStatus() == 404 {
+			return nil, server_message.NewBadRequestError("the given user doesnt form part of the conversation")
+		}
 		return nil, err
 	}
 

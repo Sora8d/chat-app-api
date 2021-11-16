@@ -43,7 +43,10 @@ func (mc messagingController) CreateConversation(ctx context.Context, pbc *proto
 
 func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message) {
 	var conversation_uuid proto_messaging.Uuid
-	if !pbm.ConversationExists {
+	if pbm.CreateConversation {
+		if pbm.NewConvo == nil {
+			return nil, server_message.NewBadRequestError("no conversation data provided")
+		}
 		data := conversation.ConversationAndParticipants{}
 		data.Poblate(false, pbm.NewConvo)
 		convo_uuid, err := mc.svc.CreateConversation(data.Conversation)
