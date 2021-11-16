@@ -12,7 +12,7 @@ type UsersServiceInterface interface {
 	CreateUser(users.RegisterUser) server_message.Svr_message
 	LoginUser(users.User) (*users.User, server_message.Svr_message)
 	GetUser(string) (*users.User, server_message.Svr_message)
-	GetUserProfile(string) (*users.UserProfile, server_message.Svr_message)
+	GetUserProfile([]string) (users.UserProfileSlice, server_message.Svr_message)
 	DeleteUser(string) server_message.Svr_message
 	UpdateUserProfile(users.UuidandProfile, bool) (*users.UserProfile, server_message.Svr_message)
 	UpdateUserProfileActive(string, bool) server_message.Svr_message
@@ -52,7 +52,7 @@ func (us userService) GetUser(uuid string) (*users.User, server_message.Svr_mess
 	return user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
 }
 
-func (us userService) GetUserProfile(uuid string) (*users.UserProfile, server_message.Svr_message) {
+func (us userService) GetUserProfile(uuid []string) (users.UserProfileSlice, server_message.Svr_message) {
 	user, aErr := us.dbRepo.GetUserProfileById(uuid)
 	if aErr != nil {
 		return nil, aErr
@@ -66,10 +66,11 @@ func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*
 		updates = u.Profile
 	)
 	if partial {
-		profile_with_information, aErr := us.dbRepo.GetUserProfileById(uuid)
+		profiles, aErr := us.dbRepo.GetUserProfileById([]string{uuid})
 		if aErr != nil {
 			return nil, aErr
 		}
+		profile_with_information := profiles[0]
 		if updates.Phone != "" {
 			profile_with_information.Phone = updates.Phone
 		}

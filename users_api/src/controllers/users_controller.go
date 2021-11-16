@@ -60,14 +60,17 @@ func (us userServer) GetUserByUuid(ctx context.Context, uuid *pb.Uuid) (*pb.User
 
 }
 
-func (us userServer) GetUserProfileByUuid(ctx context.Context, uuid *pb.Uuid) (*pb.UserProfileMsgResponse, error) {
-	result, msg := us.svc.GetUserProfile(uuid.Uuid)
+func (us userServer) GetUserProfileByUuid(ctx context.Context, uuid *pb.MultipleUuids) (*pb.UserProfileMsgResponse, error) {
+	var uuids []string
+	for _, proto_uuids := range uuid.Uuids {
+		uuids = append(uuids, proto_uuids.Uuid)
+	}
+	result, msg := us.svc.GetUserProfile(uuids)
 	var msg_to_return pb.SvrMsg
 	poblateMessage(msg, &msg_to_return)
 	if result != nil {
-		var user_p_to_return pb.UserProfile
-		result.Poblate_StructtoProto(&user_p_to_return)
-		response := pb.UserProfileMsgResponse{User: &user_p_to_return, Msg: &msg_to_return}
+		user_p_to_return := result.Poblate(true, nil)
+		response := pb.UserProfileMsgResponse{User: user_p_to_return, Msg: &msg_to_return}
 		return &response, nil
 	} else {
 		response := pb.UserProfileMsgResponse{Msg: &msg_to_return}
@@ -92,10 +95,12 @@ func (us userServer) UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequest)
 	var msg_to_return pb.SvrMsg
 	poblateMessage(msg, &msg_to_return)
 	if resp_profile != nil {
-		var user_to_return pb.UserProfile
-		resp_profile.Poblate_StructtoProto(&user_to_return)
+		var proto_user_profile pb.UserProfile
+		var slice_to_return []*pb.UserProfile
+		resp_profile.Poblate_StructtoProto(&proto_user_profile)
+		slice_to_return = append(slice_to_return, &proto_user_profile)
 
-		response := pb.UserProfileMsgResponse{User: &user_to_return, Msg: &msg_to_return}
+		response := pb.UserProfileMsgResponse{User: slice_to_return, Msg: &msg_to_return}
 		return &response, nil
 	} else {
 		response := pb.UserProfileMsgResponse{Msg: &msg_to_return}

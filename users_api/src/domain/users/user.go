@@ -20,6 +20,8 @@ type UserProfile struct {
 	CreatedAt   string `json:"created_at"`
 }
 
+type UserProfileSlice []*UserProfile
+
 type UuidandProfile struct {
 	Uuid    string      `json:"uuid"`
 	Profile UserProfile `json:"profile_info"`

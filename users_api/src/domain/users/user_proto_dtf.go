@@ -58,3 +58,22 @@ func (ru RegisterUser) Poblate_StructtoProto(pru *pb.RegisterUser) {
 	ru.LoginInfo.Poblate_StructtoProto(pru.LoginInfo)
 	ru.ProfileInfo.Poblate_StructtoProto(pru.ProfileInfo)
 }
+
+func (ups *UserProfileSlice) Poblate(direction_out bool, proto_ups []*pb.UserProfile) []*pb.UserProfile {
+	if direction_out {
+		var object_to_return []*pb.UserProfile
+		for _, user_profile := range *ups {
+			proto_user_profile := pb.UserProfile{}
+			user_profile.Poblate_StructtoProto(&proto_user_profile)
+			object_to_return = append(object_to_return, &proto_user_profile)
+		}
+		return object_to_return
+	} else {
+		for _, proto_user_profile := range proto_ups {
+			user_profile := UserProfile{}
+			user_profile.Poblate_PrototoStruct(proto_user_profile)
+			*ups = append(*ups, &user_profile)
+		}
+		return nil
+	}
+}

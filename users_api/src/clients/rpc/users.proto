@@ -8,7 +8,7 @@ service UsersProtoInterface{
 
     rpc GetUserByUuid(Uuid) returns (UserMsgResponse) {}
 
-    rpc GetUserProfileByUuid(Uuid) returns (UserProfileMsgResponse) {}
+    rpc GetUserProfileByUuid(MultipleUuids) returns (UserProfileMsgResponse) {}
 
     rpc DeleteUserByUuid(Uuid) returns (Svr_msg) {}
 
@@ -23,6 +23,10 @@ service UsersProtoInterface{
 
 message Uuid {
     string uuid =1;
+}
+
+message MultipleUuids {
+    repeated Uuid uuids =1;
 }
 
 message User{
@@ -60,7 +64,7 @@ message UserMsgResponse{
 }
 
 message UserProfileMsgResponse{
-    UserProfile user =1;
+    repeated UserProfile user =1;
     Svr_msg msg =2;
 }
 
