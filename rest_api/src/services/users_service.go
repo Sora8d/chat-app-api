@@ -15,7 +15,7 @@ type usersService struct {
 type UsersServiceInterface interface {
 	CreateUser(*users.RegisterUser) domain.Response
 	LoginUser(*users.User) domain.Response
-	GetUserProfileByUuid(*users.Uuid) domain.Response
+	GetUserProfileByUuid(*users.MultipleUuids) domain.Response
 	UpdateUser(*users.UpdateUserRequest) domain.Response
 }
 
@@ -33,7 +33,7 @@ func (us usersService) LoginUser(request *users.User) domain.Response {
 	return Response.CreateResponse(us.users_repo.LoginUser(ctx, request))
 
 }
-func (us usersService) GetUserProfileByUuid(request *users.Uuid) domain.Response {
+func (us usersService) GetUserProfileByUuid(request *users.MultipleUuids) domain.Response {
 	ctx := context.Background()
 	return Response.CreateResponse(us.users_repo.GetUserProfileByUuid(ctx, request))
 
