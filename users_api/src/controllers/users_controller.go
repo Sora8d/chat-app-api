@@ -12,31 +12,39 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type userServer struct {
+type userController struct {
 	pb.UnimplementedUsersProtoInterfaceServer
 
 	svc services.UsersServiceInterface
 }
 
-func (us userServer) UserLogin(ctx context.Context, u *pb.User) (*pb.UserMsgResponse, error) {
+type UserControllerInterface interface {
+	UserLogin(ctx context.Context, u *pb.User) (*pb.User, server_message.Svr_message)
+	GetUserByUuid(ctx context.Context, uuid *pb.MultipleUuids) ([]*pb.User, server_message.Svr_message)
+	GetUserProfileByUuid(ctx context.Context, uuid *pb.MultipleUuids) ([]*pb.UserProfile, server_message.Svr_message)
+	CreateUser(ctx context.Context, ru *pb.RegisterUser) server_message.Svr_message
+	UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequest) (*pb.UserProfile, server_message.Svr_message)
+	UpdateActive(ctx context.Context, req *pb.UpdateActiveRequest) server_message.Svr_message
+	DeleteUserByUuid(ctx context.Context, uuid *pb.Uuid) server_message.Svr_message
+}
+
+func (us userController) UserLogin(ctx context.Context, u *pb.User) (*pb.User, server_message.Svr_message) {
 	var user_log users.User
 	user_log.Poblate_PrototoStruct(u)
-	res, msg := us.svc.LoginUser(user_log)
+	res, err := us.svc.LoginUser(user_log)
+
 	var response pb.UserMsgResponse
 	var msg_to_return pb.SvrMsg
-	poblateMessage(msg, &msg_to_return)
 	response.Msg = &msg_to_return
-	if msg.GetStatus() >= 400 {
-
-		return &response, nil
+	if err != nil {
+		return nil, err
 	}
 	var user_to_return pb.User
 	res.Poblate_StructtoProto(&user_to_return)
-	response.Users = []*pb.User{&user_to_return}
-	return &response, nil
+	return &user_to_return, nil
 }
 
-func (us userServer) GetUserByUuid(ctx context.Context, uuid *pb.MultipleUuids) (*pb.UserMsgResponse, error) {
+func (us userController) GetUserByUuid(ctx context.Context, uuid *pb.MultipleUuids) ([]*pb.User, server_message.Svr_message) {
 	//This is just part of the oauth mock
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok && md.Get("user_uuid") != nil && md.Get("admin") != nil {
@@ -46,89 +54,57 @@ func (us userServer) GetUserByUuid(ctx context.Context, uuid *pb.MultipleUuids) 
 	for _, proto_uuids := range uuid.Uuids {
 		uuids = append(uuids, proto_uuids.Uuid)
 	}
-	users, msg := us.svc.GetUser(uuids)
-
-	var msg_to_return pb.SvrMsg
-	poblateMessage(msg, &msg_to_return)
-
-	if users != nil {
-		user_to_return := users.Poblate(true, nil)
-		response := pb.UserMsgResponse{Users: user_to_return, Msg: &msg_to_return}
-		return &response, nil
-	} else {
-		response := pb.UserMsgResponse{Msg: &msg_to_return}
-		return &response, nil
+	users, err := us.svc.GetUser(uuids)
+	if err != nil {
+		return nil, err
 	}
-
+	user_to_return := users.Poblate(true, nil)
+	return user_to_return, nil
 }
 
-func (us userServer) GetUserProfileByUuid(ctx context.Context, uuid *pb.MultipleUuids) (*pb.UserProfileMsgResponse, error) {
+func (us userController) GetUserProfileByUuid(ctx context.Context, uuid *pb.MultipleUuids) ([]*pb.UserProfile, server_message.Svr_message) {
 	var uuids []string
 	for _, proto_uuids := range uuid.Uuids {
 		uuids = append(uuids, proto_uuids.Uuid)
 	}
-	result, msg := us.svc.GetUserProfile(uuids)
-	var msg_to_return pb.SvrMsg
-	poblateMessage(msg, &msg_to_return)
-	if result != nil {
-		user_p_to_return := result.Poblate(true, nil)
-		response := pb.UserProfileMsgResponse{User: user_p_to_return, Msg: &msg_to_return}
-		return &response, nil
-	} else {
-		response := pb.UserProfileMsgResponse{Msg: &msg_to_return}
-		return &response, nil
+	result, err := us.svc.GetUserProfile(uuids)
+	if err != nil {
+		return nil, err
 	}
+	user_p_to_return := result.Poblate(true, nil)
+	return user_p_to_return, nil
 }
 
-func (us userServer) CreateUser(ctx context.Context, ru *pb.RegisterUser) (*pb.SvrMsg, error) {
+func (us userController) CreateUser(ctx context.Context, ru *pb.RegisterUser) server_message.Svr_message {
 	var user_profile users.RegisterUser
 	user_profile.Poblate_PrototoStruct(ru)
-	msg := us.svc.CreateUser(user_profile)
-	var msg_to_return pb.SvrMsg
-	poblateMessage(msg, &msg_to_return)
-	return &msg_to_return, nil
+	err := us.svc.CreateUser(user_profile)
+	return err
 }
 
-func (us userServer) UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequest) (*pb.UserProfileMsgResponse, error) {
+func (us userController) UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequest) (*pb.UserProfile, server_message.Svr_message) {
 	var request users.UuidandProfile
 	request.Poblate_PrototoStruct(mdur.Content)
 
-	resp_profile, msg := us.svc.UpdateUserProfile(request, mdur.Partial)
-	var msg_to_return pb.SvrMsg
-	poblateMessage(msg, &msg_to_return)
-	if resp_profile != nil {
-		var proto_user_profile pb.UserProfile
-		var slice_to_return []*pb.UserProfile
-		resp_profile.Poblate_StructtoProto(&proto_user_profile)
-		slice_to_return = append(slice_to_return, &proto_user_profile)
-
-		response := pb.UserProfileMsgResponse{User: slice_to_return, Msg: &msg_to_return}
-		return &response, nil
-	} else {
-		response := pb.UserProfileMsgResponse{Msg: &msg_to_return}
-		return &response, nil
+	resp_profile, err := us.svc.UpdateUserProfile(request, mdur.Partial)
+	if err != nil {
+		return nil, err
 	}
+	var proto_user_profile pb.UserProfile
+	resp_profile.Poblate_StructtoProto(&proto_user_profile)
+	return &proto_user_profile, nil
 }
 
-func (us userServer) UpdateActive(ctx context.Context, req *pb.UpdateActiveRequest) (*pb.SvrMsg, error) {
-	var msg_to_return pb.SvrMsg
+func (us userController) UpdateActive(ctx context.Context, req *pb.UpdateActiveRequest) server_message.Svr_message {
 	result_msg := us.svc.UpdateUserProfileActive(req.Uuid.Uuid, req.Active)
-	poblateMessage(result_msg, &msg_to_return)
-	return &msg_to_return, nil
+	return result_msg
 }
 
-func (us userServer) DeleteUserByUuid(ctx context.Context, uuid *pb.Uuid) (*pb.SvrMsg, error) {
+func (us userController) DeleteUserByUuid(ctx context.Context, uuid *pb.Uuid) server_message.Svr_message {
 	msg := us.svc.DeleteUser(uuid.Uuid)
-	var msg_to_return pb.SvrMsg
-	poblateMessage(msg, &msg_to_return)
-	return &msg_to_return, nil
+	return msg
 }
 
-func GetNewUserServer(svc services.UsersServiceInterface) userServer {
-	return userServer{svc: svc}
-}
-
-func poblateMessage(msg server_message.Svr_message, pErr *pb.SvrMsg) {
-	pErr.Status = int32(msg.GetStatus())
-	pErr.Message = msg.GetMessage()
+func GetNewUserController(svc services.UsersServiceInterface) UserControllerInterface {
+	return userController{svc: svc}
 }

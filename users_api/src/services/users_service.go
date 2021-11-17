@@ -1,8 +1,6 @@
 package services
 
 import (
-	"net/http"
-
 	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/users-api/src/domain/users"
 	"github.com/flydevs/chat-app-api/users-api/src/repository/db"
@@ -32,7 +30,7 @@ func (us userService) CreateUser(uc users.RegisterUser) server_message.Svr_messa
 	if aErr != nil {
 		return aErr
 	}
-	return server_message.NewCustomMessage(http.StatusOK, "user created")
+	return nil
 }
 
 func (us userService) LoginUser(u users.User) (*users.User, server_message.Svr_message) {
@@ -41,7 +39,7 @@ func (us userService) LoginUser(u users.User) (*users.User, server_message.Svr_m
 	if aerr != nil {
 		return nil, aerr
 	}
-	return res_user, server_message.NewCustomMessage(http.StatusOK, "user logged")
+	return res_user, nil
 }
 
 func (us userService) GetUser(uuids []string) (users.UserSlice, server_message.Svr_message) {
@@ -49,7 +47,7 @@ func (us userService) GetUser(uuids []string) (users.UserSlice, server_message.S
 	if aErr != nil {
 		return nil, aErr
 	}
-	return users, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
+	return users, nil
 }
 
 func (us userService) GetUserProfile(uuid []string) (users.UserProfileSlice, server_message.Svr_message) {
@@ -57,7 +55,7 @@ func (us userService) GetUserProfile(uuid []string) (users.UserProfileSlice, ser
 	if aErr != nil {
 		return nil, aErr
 	}
-	return user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
+	return user, nil
 }
 
 func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*users.UserProfile, server_message.Svr_message) {
@@ -93,7 +91,7 @@ func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*
 		if aErr != nil {
 			return nil, aErr
 		}
-		return users, server_message.NewCustomMessage(http.StatusOK, "user updated")
+		return users, nil
 	}
 	if updates.Phone == "" {
 		return nil, server_message.NewBadRequestError("the request is marked as no_partial, but updating will bring a nil phone value")
@@ -102,7 +100,7 @@ func (us userService) UpdateUserProfile(u users.UuidandProfile, partial bool) (*
 	if aErr != nil {
 		return nil, aErr
 	}
-	return users, server_message.NewCustomMessage(http.StatusOK, "user updated")
+	return users, nil
 }
 
 func (us userService) UpdateUserProfileActive(uuid string, active bool) server_message.Svr_message {
@@ -110,12 +108,12 @@ func (us userService) UpdateUserProfileActive(uuid string, active bool) server_m
 	if aErr != nil {
 		return aErr
 	}
-	return server_message.NewCustomMessage(http.StatusOK, "active status updated")
+	return nil
 }
 
 func (us userService) DeleteUser(uuid string) server_message.Svr_message {
 	if aErr := us.dbRepo.DeleteUser(uuid); aErr != nil {
 		return aErr
 	}
-	return server_message.NewCustomMessage(http.StatusOK, "user deleted")
+	return nil
 }

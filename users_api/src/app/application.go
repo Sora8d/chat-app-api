@@ -9,21 +9,20 @@ import (
 	"github.com/flydevs/chat-app-api/users-api/src/config"
 	"github.com/flydevs/chat-app-api/users-api/src/controllers"
 	"github.com/flydevs/chat-app-api/users-api/src/repository/db"
+	"github.com/flydevs/chat-app-api/users-api/src/server"
 	"github.com/flydevs/chat-app-api/users-api/src/services"
 	"google.golang.org/grpc"
 )
 
 var (
-	usersService services.UsersServiceInterface
-	accroles     = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
+	accroles = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
 )
 
 // usersOauthService
 
 func StartApp() {
 	postgresql.DbInit()
-	usersService = services.NewUsersService(db.GetUserDbRepository())
-	userServer := controllers.GetNewUserServer(usersService)
+	userServer := server.GetNewUserServer(controllers.GetNewUserController(services.NewUsersService(db.GetUserDbRepository())))
 
 	conn, err := net.Listen("tcp", config.Config["PORT"])
 	fmt.Sprintln(conn)
