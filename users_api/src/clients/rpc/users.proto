@@ -6,7 +6,7 @@ package flydev_chat_app_users;
 
 service UsersProtoInterface{
 
-    rpc GetUserByUuid(Uuid) returns (UserMsgResponse) {}
+    rpc GetUserByUuid(MultipleUuids) returns (UserMsgResponse) {}
 
     rpc GetUserProfileByUuid(MultipleUuids) returns (UserProfileMsgResponse) {}
 
@@ -59,7 +59,7 @@ message Svr_msg{
 }
 
 message UserMsgResponse{
-    User user =1;
+    repeated User users =1;
     Svr_msg msg =2;
 }
 

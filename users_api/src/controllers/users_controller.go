@@ -32,26 +32,28 @@ func (us userServer) UserLogin(ctx context.Context, u *pb.User) (*pb.UserMsgResp
 	}
 	var user_to_return pb.User
 	res.Poblate_StructtoProto(&user_to_return)
-	response.User = &user_to_return
+	response.Users = []*pb.User{&user_to_return}
 	return &response, nil
 }
 
-func (us userServer) GetUserByUuid(ctx context.Context, uuid *pb.Uuid) (*pb.UserMsgResponse, error) {
+func (us userServer) GetUserByUuid(ctx context.Context, uuid *pb.MultipleUuids) (*pb.UserMsgResponse, error) {
 	//This is just part of the oauth mock
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok && md.Get("user_uuid") != nil && md.Get("admin") != nil {
 		logger.Info(fmt.Sprintf("user: %s, permissions: %v", md.Get("user_uuid")[0], md.Get("admin")[0]))
 	}
-
-	user, msg := us.svc.GetUser(uuid.Uuid)
+	var uuids []string
+	for _, proto_uuids := range uuid.Uuids {
+		uuids = append(uuids, proto_uuids.Uuid)
+	}
+	users, msg := us.svc.GetUser(uuids)
 
 	var msg_to_return pb.SvrMsg
 	poblateMessage(msg, &msg_to_return)
 
-	if user != nil {
-		var user_to_return pb.User
-		user.Poblate_StructtoProto(&user_to_return)
-		response := pb.UserMsgResponse{User: &user_to_return, Msg: &msg_to_return}
+	if users != nil {
+		user_to_return := users.Poblate(true, nil)
+		response := pb.UserMsgResponse{Users: user_to_return, Msg: &msg_to_return}
 		return &response, nil
 	} else {
 		response := pb.UserMsgResponse{Msg: &msg_to_return}

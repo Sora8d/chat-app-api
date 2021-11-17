@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersProtoInterfaceClient interface {
-	GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error)
+	GetUserByUuid(ctx context.Context, in *MultipleUuids, opts ...grpc.CallOption) (*UserMsgResponse, error)
 	GetUserProfileByUuid(ctx context.Context, in *MultipleUuids, opts ...grpc.CallOption) (*UserProfileMsgResponse, error)
 	DeleteUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*SvrMsg, error)
 	CreateUser(ctx context.Context, in *RegisterUser, opts ...grpc.CallOption) (*SvrMsg, error)
@@ -36,7 +36,7 @@ func NewUsersProtoInterfaceClient(cc grpc.ClientConnInterface) UsersProtoInterfa
 	return &usersProtoInterfaceClient{cc}
 }
 
-func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *Uuid, opts ...grpc.CallOption) (*UserMsgResponse, error) {
+func (c *usersProtoInterfaceClient) GetUserByUuid(ctx context.Context, in *MultipleUuids, opts ...grpc.CallOption) (*UserMsgResponse, error) {
 	out := new(UserMsgResponse)
 	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid", in, out, opts...)
 	if err != nil {
@@ -103,7 +103,7 @@ func (c *usersProtoInterfaceClient) UserLogin(ctx context.Context, in *User, opt
 // All implementations must embed UnimplementedUsersProtoInterfaceServer
 // for forward compatibility
 type UsersProtoInterfaceServer interface {
-	GetUserByUuid(context.Context, *Uuid) (*UserMsgResponse, error)
+	GetUserByUuid(context.Context, *MultipleUuids) (*UserMsgResponse, error)
 	GetUserProfileByUuid(context.Context, *MultipleUuids) (*UserProfileMsgResponse, error)
 	DeleteUserByUuid(context.Context, *Uuid) (*SvrMsg, error)
 	CreateUser(context.Context, *RegisterUser) (*SvrMsg, error)
@@ -118,7 +118,7 @@ type UsersProtoInterfaceServer interface {
 type UnimplementedUsersProtoInterfaceServer struct {
 }
 
-func (UnimplementedUsersProtoInterfaceServer) GetUserByUuid(context.Context, *Uuid) (*UserMsgResponse, error) {
+func (UnimplementedUsersProtoInterfaceServer) GetUserByUuid(context.Context, *MultipleUuids) (*UserMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByUuid not implemented")
 }
 func (UnimplementedUsersProtoInterfaceServer) GetUserProfileByUuid(context.Context, *MultipleUuids) (*UserProfileMsgResponse, error) {
@@ -153,7 +153,7 @@ func RegisterUsersProtoInterfaceServer(s grpc.ServiceRegistrar, srv UsersProtoIn
 }
 
 func _UsersProtoInterface_GetUserByUuid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Uuid)
+	in := new(MultipleUuids)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func _UsersProtoInterface_GetUserByUuid_Handler(srv interface{}, ctx context.Con
 		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersProtoInterfaceServer).GetUserByUuid(ctx, req.(*Uuid))
+		return srv.(UsersProtoInterfaceServer).GetUserByUuid(ctx, req.(*MultipleUuids))
 	}
 	return interceptor(ctx, in, info, handler)
 }
