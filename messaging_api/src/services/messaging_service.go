@@ -47,11 +47,11 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	return uuid, nil
 }
 func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
-	user, err := ms.proto_users.GetUser(msg.AuthorUuid)
+	user, err := ms.proto_users.GetUser([]string{msg.AuthorUuid})
 	if err != nil {
 		return nil, err
 	}
-	msg.SetAuthorId(user.Id)
+	msg.SetAuthorId(user[0].Id)
 
 	convo, err := ms.GetConversationByUuid(msg.ConversationUuid)
 	if err != nil {
@@ -85,12 +85,13 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.Create
 	}
 	userconvo.SetConversation(*convo)
 
+	uuids := userconvo.UserConversationSlice.GetUuidsStringSlice()
+	users, err := ms.proto_users.GetUser(uuids)
+	if err != nil {
+		return err
+	}
+	userconvo.UserConversationSlice.ParseIds(users)
 	for i, uc := range userconvo.UserConversationSlice {
-		user, err := ms.proto_users.GetUser(uc.UserUuid)
-		if err != nil {
-			return err
-		}
-		userconvo.UserConversationSlice[i].SetUserId(user.Id)
 		//Twilio---
 		sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, uc.UserUuid)
 		if err != nil {

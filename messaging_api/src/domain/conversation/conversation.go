@@ -1,5 +1,10 @@
 package conversation
 
+import (
+	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/flydevs/chat-app-api/messaging-api/src/domain/users"
+)
+
 type Conversation struct {
 	Id        int64   `json:"id"`
 	Uuid      string  `json:"uuid"`
@@ -38,16 +43,46 @@ func (uc *UserConversation) SetTwilioSid(twilio_sid string) {
 	uc.TwilioSid = twilio_sid
 }
 
-type UserConverstionSlice []UserConversation
-
 func (uc *UserConversation) SetUserId(id int64) {
 	uc.UserId = id
+}
+
+type UserConversationSlice []UserConversation
+
+func (ucs *UserConversationSlice) GetUuidsStringSlice() []string {
+	uuids := []string{}
+	for _, uc := range *ucs {
+		uuids = append(uuids, uc.UserUuid)
+	}
+	return uuids
+}
+
+func (ucs *UserConversationSlice) ParseIds(user_slice []*users.User) server_message.Svr_message {
+	if len(*ucs) != len(user_slice) {
+		return server_message.NewBadRequestError("one of the users given doesnt exist")
+	}
+	for index, uc := range *ucs {
+		found := false
+		for index_users, user := range user_slice {
+			if user.Uuid == uc.UserUuid {
+				found = true
+				uc.UserId = user.Id
+				user_slice = append(user_slice[:index_users], user_slice[index_users+1:]...)
+				break
+			}
+		}
+		if !found {
+			return server_message.NewBadRequestError("one of the users given doesnt exist")
+		}
+		(*ucs)[index] = uc
+	}
+	return nil
 }
 
 type ConversationAndParticipants struct {
 	Conversation `json:"conversation"`
 	UserConversation
-	Participants UserConverstionSlice `json:"participants"`
+	Participants UserConversationSlice `json:"participants"`
 }
 
 type ConversationAndParticipantsSlice []ConversationAndParticipants
@@ -63,8 +98,8 @@ func (cp *ConversationAndParticipants) SetConversation(convo Conversation) {
 }
 
 type CreateUserConversationRequest struct {
-	UserConversationSlice UserConverstionSlice `json:"user_conversation_slice"`
-	Conversation          Conversation         `json:"conversation"`
+	UserConversationSlice UserConversationSlice `json:"user_conversation_slice"`
+	Conversation          Conversation          `json:"conversation"`
 }
 
 func (cucr *CreateUserConversationRequest) SetUserConversationSlice(ucs []UserConversation) {
