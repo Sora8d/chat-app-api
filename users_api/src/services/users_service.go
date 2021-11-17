@@ -11,7 +11,7 @@ import (
 type UsersServiceInterface interface {
 	CreateUser(users.RegisterUser) server_message.Svr_message
 	LoginUser(users.User) (*users.User, server_message.Svr_message)
-	GetUser(string) (*users.User, server_message.Svr_message)
+	GetUser([]string) (users.UserSlice, server_message.Svr_message)
 	GetUserProfile([]string) (users.UserProfileSlice, server_message.Svr_message)
 	DeleteUser(string) server_message.Svr_message
 	UpdateUserProfile(users.UuidandProfile, bool) (*users.UserProfile, server_message.Svr_message)
@@ -44,12 +44,12 @@ func (us userService) LoginUser(u users.User) (*users.User, server_message.Svr_m
 	return res_user, server_message.NewCustomMessage(http.StatusOK, "user logged")
 }
 
-func (us userService) GetUser(uuid string) (*users.User, server_message.Svr_message) {
-	user, aErr := us.dbRepo.GetUserByUuid(uuid)
+func (us userService) GetUser(uuids []string) (users.UserSlice, server_message.Svr_message) {
+	users, aErr := us.dbRepo.GetUserByUuid(uuids)
 	if aErr != nil {
 		return nil, aErr
 	}
-	return user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
+	return users, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
 }
 
 func (us userService) GetUserProfile(uuid []string) (users.UserProfileSlice, server_message.Svr_message) {

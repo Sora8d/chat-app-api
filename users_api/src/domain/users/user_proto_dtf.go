@@ -77,3 +77,22 @@ func (ups *UserProfileSlice) Poblate(direction_out bool, proto_ups []*pb.UserPro
 		return nil
 	}
 }
+
+func (ups *UserSlice) Poblate(direction_out bool, proto_ups []*pb.User) []*pb.User {
+	if direction_out {
+		var object_to_return []*pb.User
+		for _, user := range *ups {
+			proto_user := pb.User{}
+			user.Poblate_StructtoProto(&proto_user)
+			object_to_return = append(object_to_return, &proto_user)
+		}
+		return object_to_return
+	} else {
+		for _, proto_user := range proto_ups {
+			user := User{}
+			user.Poblate_PrototoStruct(proto_user)
+			*ups = append(*ups, &user)
+		}
+		return nil
+	}
+}

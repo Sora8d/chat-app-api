@@ -8,7 +8,6 @@ import (
 	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/users-api/src/clients/postgresql"
 	"github.com/flydevs/chat-app-api/users-api/src/domain/users"
-	"github.com/jackc/pgx/v4"
 )
 
 const (
@@ -24,6 +23,10 @@ const (
 //Here is where the queries are going to be
 )
 
+const (
+	errNoRows = "no rows in result set"
+)
+
 var (
 	ctx         = context.Background()
 	GoquDialect goqu.DialectWrapper
@@ -34,7 +37,7 @@ func init() {
 }
 
 type UserDbRepository interface {
-	GetUserByUuid(string) (*users.User, server_message.Svr_message)
+	GetUserByUuid([]string) ([]*users.User, server_message.Svr_message)
 	GetUserProfileById([]string) ([]*users.UserProfile, server_message.Svr_message)
 	CreateUser(users.RegisterUser) server_message.Svr_message
 	DeleteUser(string) server_message.Svr_message
@@ -50,18 +53,32 @@ func GetUserDbRepository() UserDbRepository {
 type userDbRepository struct {
 }
 
-func (dbr *userDbRepository) GetUserByUuid(uuid string) (*users.User, server_message.Svr_message) {
+func (dbr *userDbRepository) GetUserByUuid(uuids []string) ([]*users.User, server_message.Svr_message) {
 	client := postgresql.GetSession()
-	user := users.User{}
-	row := client.QueryRow(queryGetUserByUuid, uuid)
-	if err := row.Scan(&user.Id, &user.Uuid); err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, server_message.NewNotFoundError("no user with given uuid")
-		}
-		getErr := server_message.NewBadRequestError("error ocurred fetching the id")
-		return nil, getErr
+	query := GoquDialect.From("user_table").Select("id", "uuid").Where(goqu.Ex{"uuid": uuids})
+	toSQL, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error generating goqu sql in GetUserByUuid", err)
+		return nil, server_message.NewInternalError()
 	}
-	return &user, nil
+	rows, err := client.Query(toSQL)
+	if err != nil {
+		logger.Error("error executing sql in GetUserByUuid", err)
+		return nil, server_message.NewInternalError()
+	}
+	user_array := []*users.User{}
+	for rows.Next() {
+		user := users.User{}
+		if err := rows.Scan(&user.Id, &user.Uuid); err != nil {
+			getErr := server_message.NewBadRequestError("error ocurred fetching the id")
+			return nil, getErr
+		}
+		user_array = append(user_array, &user)
+	}
+	if len(user_array) == 0 {
+		return nil, server_message.NewNotFoundError("no users were found")
+	}
+	return user_array, nil
 }
 
 func (dbr *userDbRepository) GetUserProfileById(uuids []string) ([]*users.UserProfile, server_message.Svr_message) {
@@ -73,11 +90,12 @@ func (dbr *userDbRepository) GetUserProfileById(uuids []string) ([]*users.UserPr
 		goqu.T("user_table"), goqu.On(goqu.Ex{"user_profile.user_id": goqu.I("user_table.id")})).Where(goqu.Ex{"user_table.uuid": uuids})
 	toSQL, _, err := query.ToSQL()
 	if err != nil {
-		logger.Error("error generating goqu sql", err)
+		logger.Error("error generating goqu sql in GetUserProfileById", err)
 		return nil, server_message.NewInternalError()
 	}
 	rows, err := client.Query(toSQL)
 	if err != nil {
+		logger.Error("error executing sql in GetUserProfile", err)
 		getErr := server_message.NewInternalError()
 		logger.Error(getErr.GetFormatted(), err)
 		return nil, getErr
@@ -91,7 +109,9 @@ func (dbr *userDbRepository) GetUserProfileById(uuids []string) ([]*users.UserPr
 		}
 		profiles = append(profiles, &profile)
 	}
-
+	if len(profiles) == 0 {
+		return nil, server_message.NewNotFoundError("no users were found")
+	}
 	return profiles, nil
 }
 
@@ -132,8 +152,11 @@ func (dbr *userDbRepository) LoginUser(log_info users.User) (*users.User, server
 
 	row := client.QueryRow(queryGetUserByLogin, log_info.LoginUser, log_info.LoginPassword)
 	if err := row.Scan(&resp_user.Id, &resp_user.Uuid, &resp_user.LoginUser); err != nil {
-		delErr := server_message.NewBadRequestError("there was an error login user")
-		return nil, delErr
+		if err.Error() == errNoRows {
+			return nil, server_message.NewBadRequestError("invalid credentials")
+		}
+		logger.Error("there was an error in LoginUser", err)
+		return nil, server_message.NewInternalError()
 	}
 	return &resp_user, nil
 }

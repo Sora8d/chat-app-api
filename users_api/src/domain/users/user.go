@@ -7,6 +7,8 @@ type User struct {
 	LoginPassword string `json:"login_password,omitempty"`
 }
 
+type UserSlice []*User
+
 type UserProfile struct {
 	Id          int64  `json:"id,omitempty"`
 	UserId      int64  `json:"user_id"`
