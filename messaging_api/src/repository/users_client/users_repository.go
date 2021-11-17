@@ -20,7 +20,7 @@ func GetUsersProtoClient() UserProtoClientRepository {
 
 //Later add secret
 type UserProtoClientRepository interface {
-	GetUser(string) (*users.User, server_message.Svr_message)
+	GetUser([]string) ([]*users.User, server_message.Svr_message)
 }
 
 type userProtoClient struct {
@@ -47,10 +47,14 @@ func init() {
 	u_proto.setClient(pb.NewUsersProtoInterfaceClient(c))
 }
 
-func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Svr_message) {
-	pbuuid := pb.Uuid{Uuid: uuid}
+func (upc *userProtoClient) GetUser(uuids []string) ([]*users.User, server_message.Svr_message) {
+	proto_uuids := pb.MultipleUuids{}
+	for _, uuid := range uuids {
+		proto_uuid := pb.Uuid{Uuid: uuid}
+		proto_uuids.Uuids = append(proto_uuids.Uuids, &proto_uuid)
+	}
 	ctx := context.Background()
-	user_msg_response, err := upc.client.GetUserByUuid(ctx, &pbuuid)
+	user_msg_response, err := upc.client.GetUserByUuid(ctx, &proto_uuids)
 	if err != nil {
 		logger.Error("Error response from users api", err)
 		return nil, server_message.NewInternalError()
@@ -59,17 +63,21 @@ func (upc *userProtoClient) GetUser(uuid string) (*users.User, server_message.Sv
 	if msg.GetStatus() >= 400 {
 		return nil, msg
 	}
-	user := poblateUserfromProto(user_msg_response.User)
-	return &user, nil
+	user_array := poblateUserfromProto(user_msg_response.Users)
+	return user_array, nil
 }
 
 func poblateMsgfromProto(pbmsg *pb.SvrMsg) server_message.Svr_message {
 	return server_message.NewCustomMessage(int(pbmsg.Status), pbmsg.Message)
 }
 
-func poblateUserfromProto(pbuser *pb.User) users.User {
-	var user users.User
-	user.Id = pbuser.Id
-	user.Uuid = pbuser.Uuid.Uuid
-	return user
+func poblateUserfromProto(proto_users []*pb.User) []*users.User {
+	user_array := []*users.User{}
+	for _, proto_user := range proto_users {
+		var user users.User
+		user.Id = proto_user.Id
+		user.Uuid = proto_user.Uuid.Uuid
+		user_array = append(user_array, &user)
+	}
+	return user_array
 }

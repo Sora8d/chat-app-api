@@ -52,7 +52,7 @@ func (uc *UserConversation) Poblate(direction_out bool, cpb *pb.UserConversation
 }
 
 //These return slices because slices are already pointers, and having a pointer to a pointer seems messy.
-func (ucs *UserConverstionSlice) Poblate(direction_out bool, cpb []*pb.UserConversation) []*pb.UserConversation {
+func (ucs *UserConversationSlice) Poblate(direction_out bool, cpb []*pb.UserConversation) []*pb.UserConversation {
 	if direction_out {
 		var object_to_return []*pb.UserConversation
 		for _, participant := range *ucs {

@@ -1,21 +1,6 @@
 package services
 
-import (
-	"fmt"
-	"net/http"
-	"os"
-	"testing"
-
-	"github.com/flydevs/chat-app-api/common/server_message"
-	db_ctrl "github.com/flydevs/chat-app-api/messaging-api/src/clients/testing_tools"
-	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
-	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
-	"github.com/flydevs/chat-app-api/messaging-api/src/domain/users"
-	"github.com/flydevs/chat-app-api/messaging-api/src/repository/db"
-	"github.com/flydevs/chat-app-api/messaging-api/src/repository/twilio"
-	"github.com/flydevs/chat-app-api/messaging-api/src/repository/users_client"
-)
-
+/*
 var (
 	mess_test_service MessagingService
 	mockproto         = true
@@ -24,15 +9,17 @@ var (
 type mockprotoclient struct {
 }
 
-func (mpc mockprotoclient) GetUser(mockuuid string) (*users.User, server_message.Svr_message) {
+func (mpc mockprotoclient) GetUser(mockuuid string) ([]*users.User, server_message.Svr_message) {
 	switch mockuuid {
 	case test2mock:
+
 		mock_user := users.User{
 			Uuid: mockuuid,
 			Id:   2,
 		}
 		return &mock_user, server_message.NewCustomMessage(http.StatusOK, "user retrieved")
 	case test1mock:
+
 		mock_user := users.User{
 			Uuid: mockuuid,
 			Id:   1,
@@ -166,7 +153,7 @@ func TestCreateGetConversationExternal(t *testing.T) {
 	}
 
 }
-
+*/
 /*
 func TestCreateGetMessage(t *testing.T) {
 	//	defer db_ctrl.DBClient.Flush()
