@@ -65,7 +65,7 @@ func (uctrl usersController) GetUserProfileByUuid(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	new_request := users.Uuid{}
+	new_request := users.MultipleUuids{}
 	if err := protojson.Unmarshal(bytes, &new_request); err != nil {
 		aErr := server_message.NewBadRequestError("invalid json")
 		c.JSON(aErr.GetStatus(), aErr)

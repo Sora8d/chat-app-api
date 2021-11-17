@@ -2,12 +2,13 @@ syntax= "proto3";
 
 option go_package= "github.com/flydevs/chat-app-api/rest-api/src/clients/rpc/users";
 
-
 package flydev_chat_app_users;
 
 service UsersProtoInterface{
 
-    rpc GetUserProfileByUuid(Uuid) returns (UserProfileMsgResponse) {}
+    rpc GetUserByUuid(Uuid) returns (UserMsgResponse) {}
+
+    rpc GetUserProfileByUuid(MultipleUuids) returns (UserProfileMsgResponse) {}
 
     rpc DeleteUserByUuid(Uuid) returns (Svr_msg) {}
 
@@ -19,8 +20,13 @@ service UsersProtoInterface{
 //Este user en user login voy a reemplazarlo por un login_form que tenga login_user y login_password como atributos.
     rpc UserLogin(User) returns (UserMsgResponse) {}
 }
+
 message Uuid {
     string uuid =1;
+}
+
+message MultipleUuids {
+    repeated Uuid uuids =1;
 }
 
 message User{
@@ -31,7 +37,7 @@ message User{
 }
 
 message UserProfile {
-    bool active= 1; //
+    bool active= 1;
     string phone = 2;
     string first_name= 4;
     string last_name= 5;
@@ -58,7 +64,7 @@ message UserMsgResponse{
 }
 
 message UserProfileMsgResponse{
-    UserProfile user =1;
+    repeated UserProfile user =1;
     Svr_msg msg =2;
 }
 

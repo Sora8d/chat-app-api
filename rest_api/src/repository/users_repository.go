@@ -15,8 +15,8 @@ type usersRepository struct {
 type UsersRepositoryInterface interface {
 	CreateUser(context.Context, *proto_users.RegisterUser) server_message.Svr_message
 	LoginUser(context.Context, *proto_users.User) (*proto_users.User, server_message.Svr_message)
-	GetUserProfileByUuid(context.Context, *proto_users.Uuid) (*proto_users.UserProfile, server_message.Svr_message)
-	UpdateUser(context.Context, *proto_users.UpdateUserRequest) (*proto_users.UserProfile, server_message.Svr_message)
+	GetUserProfileByUuid(context.Context, *proto_users.MultipleUuids) ([]*proto_users.UserProfile, server_message.Svr_message)
+	UpdateUser(context.Context, *proto_users.UpdateUserRequest) ([]*proto_users.UserProfile, server_message.Svr_message)
 }
 
 func GetUsersRepository() UsersRepositoryInterface {
@@ -43,7 +43,7 @@ func (ur usersRepository) LoginUser(ctx context.Context, in *proto_users.User) (
 	return response.User, server_message.NewCustomMessage(int(response.Msg.Status), response.Msg.Message)
 }
 
-func (ur usersRepository) GetUserProfileByUuid(ctx context.Context, in *proto_users.Uuid) (*proto_users.UserProfile, server_message.Svr_message) {
+func (ur usersRepository) GetUserProfileByUuid(ctx context.Context, in *proto_users.MultipleUuids) ([]*proto_users.UserProfile, server_message.Svr_message) {
 	client := proto_clients.GetUsersClient()
 	response, err := client.Client.GetUserProfileByUuid(ctx, in)
 	if err != nil {
@@ -53,7 +53,7 @@ func (ur usersRepository) GetUserProfileByUuid(ctx context.Context, in *proto_us
 	return response.User, server_message.NewCustomMessage(int(response.Msg.Status), response.Msg.Message)
 }
 
-func (ur usersRepository) UpdateUser(ctx context.Context, in *proto_users.UpdateUserRequest) (*proto_users.UserProfile, server_message.Svr_message) {
+func (ur usersRepository) UpdateUser(ctx context.Context, in *proto_users.UpdateUserRequest) ([]*proto_users.UserProfile, server_message.Svr_message) {
 	client := proto_clients.GetUsersClient()
 	response, err := client.Client.UpdateUser(ctx, in)
 	if err != nil {
