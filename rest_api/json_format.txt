@@ -18,15 +18,19 @@
 -user
 
 -create user :
+/user
 {
     "login_info": {"login_user": "123", "login_password": "1234"},
     "profile_info": {"phone": "123", "first_name": "Hernan", "description": "Tito"}
 }
 - LoginUser:
+/login
 {"login_user": "123", "login_password": "1234"}
 
 - GetUserProfileByUuid:
-{"uuid": "6a2d71a9-90ee-4ace-9521-c367a2a1d0c1"}
+/user
+{"uuids":[{"uuid": "6a2d71a9-90ee-4ace-9521-c367a2a1d0c1"}]}
 
 - Update User:
+/user
 {"content": {"uuid":{"uuid": "6a2d71a9-90ee-4ace-9521-c367a2a1d0c1"}, "user": {"last_name": "falacia", "phone": "123"}}, "partial": false}
