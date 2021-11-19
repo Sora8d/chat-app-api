@@ -11,5 +11,6 @@ func init() {
 		"OAUTH_KEY":     os.Getenv("OAUTH_ENV"),
 		"USERS_KEY":     os.Getenv("USERS_ENV"),
 		"MESSAGING_KEY": os.Getenv("MESSAGING_ENV"),
+		"USERS_ADDRESS": os.Getenv("USERS_ADDRESS"),
 	}
 }
