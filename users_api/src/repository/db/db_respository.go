@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"strings"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/flydevs/chat-app-api/common/logger"
@@ -24,7 +25,8 @@ const (
 )
 
 const (
-	errNoRows = "no rows in result set"
+	errUniquePhoneConstraint = "user_profile_phone_key"
+	errNoRows                = "no rows in result set"
 )
 
 var (
@@ -135,8 +137,12 @@ func (dbr *userDbRepository) CreateUser(uc users.RegisterUser) server_message.Sv
 
 	_, err = tx.Exec(ctx, queryInsertUserProfile, newUser.Id, uc.ProfileInfo.Phone, uc.ProfileInfo.Active, uc.ProfileInfo.FirstName, uc.ProfileInfo.LastName, uc.ProfileInfo.Description, uc.ProfileInfo.UserName, uc.ProfileInfo.AvatarUrl)
 	if err != nil {
+		if strings.Contains(err.Error(), errUniquePhoneConstraint) {
+			transErr := server_message.NewBadRequestError("phone number already registered")
+			return transErr
+		}
 		//Later make an if to unique costraint breaks
-		transErr := server_message.NewBadRequestError("error creating user")
+		transErr := server_message.NewInternalError()
 		//		logger.Error("error trying to create user_profile in CreateUser fuction in the db_repository", err)
 		return transErr
 	}
