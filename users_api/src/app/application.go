@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"net"
 
+<<<<<<< HEAD
 	"github.com/Sora8d/common/logger"
+=======
+	"github.com/flydevs/chat-app-api/common/logger"
+>>>>>>> main
 	"github.com/flydevs/chat-app-api/users-api/src/clients/postgresql"
 	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
 	"github.com/flydevs/chat-app-api/users-api/src/config"
@@ -24,7 +28,7 @@ var (
 func StartApp() {
 	postgresql.DbInit()
 	userServer := server.GetNewUserServer(controllers.GetNewUserController(services.NewUsersService(db.GetUserDbRepository())))
-	logger.Info(fmt.Sprintln("initiating app on port ", config.Config["PORT"]))
+	logger.Info(fmt.Sprint("starting up the users api at port ", config.Config["PORT"]))
 	conn, err := net.Listen("tcp", config.Config["PORT"])
 	fmt.Sprintln(conn)
 	if err != nil {
