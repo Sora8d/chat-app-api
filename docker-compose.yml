@@ -1,0 +1,34 @@
+version: '3.3'
+services:
+    rest_api:
+        build:
+            dockerfile: Dockerfile
+            context: ./rest_api
+        env_file:
+            - rest_env.list
+        ports:
+            - '7999:7999'
+        network_mode: host
+        container_name: fd_rest_api
+
+    messaging_api:
+        build:
+            dockerfile: Dockerfile
+            context: ./messaging_api
+        env_file:
+            - messaging_env.list
+        ports:
+            - '8081:8081'
+        network_mode: host
+        container_name: fd_messaging_api
+    users_api:
+        build:
+            dockerfile: Dockerfile
+            context: ./users_api
+        env_file:
+            - user_env.list
+        ports:
+            - '8080:8080'
+        network_mode: host
+        container_name: fd_users_api
+    

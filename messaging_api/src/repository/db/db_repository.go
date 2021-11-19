@@ -1,10 +1,10 @@
 package db
 
 import (
+	"github.com/Sora8d/common/logger"
+	"github.com/Sora8d/common/server_message"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/clients/postgresql"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"

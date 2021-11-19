@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/server_message"
 	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
 	"github.com/flydevs/chat-app-api/users-api/src/controllers"
 )

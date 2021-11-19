@@ -1,6 +1,6 @@
 package domain
 
-import "github.com/flydevs/chat-app-api/common/server_message"
+import "github.com/Sora8d/common/server_message"
 
 type Response struct {
 	Response server_message.Svr_message `json:"data"`

@@ -1,8 +1,8 @@
 package twilio
 
 import (
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/logger"
+	"github.com/Sora8d/common/server_message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/clients/twilio"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
 	conversation "github.com/twilio/twilio-go/rest/conversations/v1"

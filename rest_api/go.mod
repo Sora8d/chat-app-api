@@ -3,8 +3,9 @@ module github.com/flydevs/chat-app-api/rest-api
 go 1.17
 
 require (
-	github.com/flydevs/chat-app-api/common v0.0.0-20211112201611-e993578a3a9b
+	github.com/Sora8d/common v0.0.0-20211118170033-8e661185d6d9
 	github.com/gin-gonic/gin v1.7.4
+	github.com/joho/godotenv v1.4.0
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 )

@@ -3,8 +3,8 @@ module github.com/flydevs/chat-app-api/messaging-api
 go 1.17
 
 require (
+	github.com/Sora8d/common v0.0.0-20211118170033-8e661185d6d9
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/flydevs/chat-app-api/common v0.0.0-20211101171717-aa763e3ea61a
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/twilio/twilio-go v0.18.0
 	google.golang.org/grpc v1.42.0

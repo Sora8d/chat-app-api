@@ -5,7 +5,7 @@ import (
 
 	"github.com/flydevs/chat-app-api/messaging-api/src/config"
 
-	"github.com/flydevs/chat-app-api/common/logger"
+	"github.com/Sora8d/common/logger"
 
 	pgx "github.com/jackc/pgx/v4"
 )

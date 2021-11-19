@@ -3,7 +3,7 @@ package controller
 import (
 	"io/ioutil"
 
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/server_message"
 	"github.com/flydevs/chat-app-api/rest-api/src/clients/rpc/users"
 	"github.com/flydevs/chat-app-api/rest-api/src/services"
 	"github.com/gin-gonic/gin"

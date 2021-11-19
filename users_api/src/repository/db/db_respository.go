@@ -3,9 +3,9 @@ package db
 import (
 	"context"
 
+	"github.com/Sora8d/common/logger"
+	"github.com/Sora8d/common/server_message"
 	"github.com/doug-martin/goqu/v9"
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/users-api/src/clients/postgresql"
 	"github.com/flydevs/chat-app-api/users-api/src/domain/users"
 )

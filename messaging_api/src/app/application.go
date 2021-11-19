@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/flydevs/chat-app-api/common/logger"
+	"github.com/Sora8d/common/logger"
 	pb "github.com/flydevs/chat-app-api/messaging-api/src/clients/rpc/messaging"
 	"github.com/flydevs/chat-app-api/messaging-api/src/config"
 	"github.com/flydevs/chat-app-api/messaging-api/src/controllers"
@@ -26,7 +26,7 @@ var (
 // usersOauthService
 
 func StartApp() {
-	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.NewTwilioRepository())
+	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.GetTwilioMock())
 	messagingController = controllers.GetMessagingController(messagingService)
 	messagingServer := server.GetMessagingserver(messagingController)
 	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
