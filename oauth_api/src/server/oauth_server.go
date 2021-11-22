@@ -14,7 +14,7 @@ type OauthServer struct {
 	oauthctrl controller.OauthControllerInterface
 }
 
-func (oauthsvr OauthServer) GetNewServer(oauthctrl controller.OauthControllerInterface) *OauthServer {
+func GetNewServer(oauthctrl controller.OauthControllerInterface) *OauthServer {
 	return &OauthServer{oauthctrl: oauthctrl}
 }
 
@@ -31,7 +31,7 @@ func (oauthsvr OauthServer) LoginUser(ctx context.Context, request *proto_oauth.
 	proto_response.Response = poblateMessage(OKMessage("user logged succesfully"))
 	return proto_response, nil
 }
-func (oauthsvr OauthServer) LoginClient(ctx context.Context, request *proto_oauth.ServiceKey) (*proto_oauth.JWTResponse, server_message.Svr_message) {
+func (oauthsvr OauthServer) LoginClient(ctx context.Context, request *proto_oauth.ServiceKey) (*proto_oauth.JWTResponse, error) {
 	var proto_response *proto_oauth.JWTResponse
 	response, aErr := oauthsvr.oauthctrl.GenerateService(ctx, request)
 	if aErr != nil {
@@ -45,7 +45,7 @@ func (oauthsvr OauthServer) LoginClient(ctx context.Context, request *proto_oaut
 	return proto_response, nil
 }
 
-func (oauthsvr OauthServer) Verify(ctx context.Context, request *proto_oauth.JWT) (*proto_oauth.EntityResponse, server_message.Svr_message) {
+func (oauthsvr OauthServer) Verify(ctx context.Context, request *proto_oauth.JWT) (*proto_oauth.EntityResponse, error) {
 	var proto_response *proto_oauth.EntityResponse
 	response, aErr := oauthsvr.oauthctrl.Verify(ctx, request)
 	if aErr != nil {

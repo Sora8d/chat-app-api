@@ -31,7 +31,7 @@ func NewUsersProtoInterfaceClient(cc grpc.ClientConnInterface) UsersProtoInterfa
 
 func (c *usersProtoInterfaceClient) UserLogin(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserMsgResponse, error) {
 	out := new(UserMsgResponse)
-	err := c.cc.Invoke(ctx, "/flydev_chat_users.UsersProtoInterface/UserLogin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/flydev_chat_app_users.UsersProtoInterface/UserLogin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func _UsersProtoInterface_UserLogin_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/flydev_chat_users.UsersProtoInterface/UserLogin",
+		FullMethod: "/flydev_chat_app_users.UsersProtoInterface/UserLogin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersProtoInterfaceServer).UserLogin(ctx, req.(*User))
@@ -88,7 +88,7 @@ func _UsersProtoInterface_UserLogin_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UsersProtoInterface_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "flydev_chat_users.UsersProtoInterface",
+	ServiceName: "flydev_chat_app_users.UsersProtoInterface",
 	HandlerType: (*UsersProtoInterfaceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

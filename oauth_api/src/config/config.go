@@ -8,9 +8,12 @@ var (
 
 func init() {
 	Config = map[string]string{
-		"OAUTH_KEY":     os.Getenv("OAUTH_ENV"),
-		"USERS_KEY":     os.Getenv("USERS_ENV"),
-		"MESSAGING_KEY": os.Getenv("MESSAGING_ENV"),
+		"PORT":          os.Getenv("PORT"),
+		"SECRET_KEY":    os.Getenv("SECRET_KEY"),
 		"USERS_ADDRESS": os.Getenv("USERS_ADDRESS"),
+		"OAUTH_KEY":     os.Getenv("OAUTH_KEY"),
+		"USERS_KEY":     os.Getenv("USERS_KEY"),
+		"MESSAGING_KEY": os.Getenv("MESSAGING_KEY"),
+		"REST_KEY":      os.Getenv("REST_KEY"),
 	}
 }

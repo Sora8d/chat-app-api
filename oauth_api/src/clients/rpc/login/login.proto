@@ -2,7 +2,7 @@ syntax= "proto3";
 
 option go_package= "github.com/flydevs/chat-app-api/oauth-api/src/clients/rpc/login";
 
-package flydev_chat_users;
+package flydev_chat_app_users;
 
 service UsersProtoInterface{
     rpc UserLogin(User) returns (UserMsgResponse) {}

@@ -22,7 +22,7 @@ type OauthServiceInterface interface {
 	Verify(string) (*entity.Entity, server_message.Svr_message)
 }
 
-func NewOauthServce(jwtrepo repository.JwtRepositoryInterface, loginrepo repository.LoginRepositoryInterface) OauthServiceInterface {
+func NewOauthService(jwtrepo repository.JwtRepositoryInterface, loginrepo repository.LoginRepositoryInterface) OauthServiceInterface {
 	return &oauthService{jwtrepo: jwtrepo, loginrepo: loginrepo}
 }
 
