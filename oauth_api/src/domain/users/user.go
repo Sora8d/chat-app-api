@@ -6,5 +6,10 @@ import (
 
 type User struct {
 	jwt.StandardClaims
-	Uuid string
+	Uuid string `json:"uuid"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }

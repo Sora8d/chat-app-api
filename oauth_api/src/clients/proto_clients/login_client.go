@@ -35,6 +35,6 @@ func init() {
 	login_proto_client.setClient(proto_users.NewUsersProtoInterfaceClient(connection))
 }
 
-func GetMessagingClient() *loginProtoClient {
+func GetLoginClient() *loginProtoClient {
 	return &login_proto_client
 }

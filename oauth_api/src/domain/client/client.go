@@ -14,28 +14,20 @@ type Client struct {
 
 type ServiceKey string
 
-func (sk ServiceKey) ValidateKey() (*int, *string, server_message.Svr_message) {
+func (sk *ServiceKey) Set(str string) {
+	*sk = ServiceKey(str)
+}
+
+func (sk ServiceKey) ValidateKey() (*int, server_message.Svr_message) {
 	switch string(sk) {
-	case config.Config["OAUTH_KEY"]:
+	case config.Config["OAUTH_KEY"], config.Config["MESSAGING_KEY"]:
 		perm := 2
-		name := "oauth"
-		return &perm, &name, nil
+		return &perm, nil
 
-	case config.Config["USERS_KEY"]:
+	case config.Config["USERS_KEY"], config.Config["REST_KEY"]:
 		perm := 1
-		name := "users"
-		return &perm, &name, nil
-
-	case config.Config["REST_KEY"]:
-		perm := 1
-		name := "rest"
-		return &perm, &name, nil
-
-	case config.Config["MESSAGING_KEY"]:
-		perm := 2
-		name := "messaging"
-		return &perm, &name, nil
+		return &perm, nil
 	default:
-		return nil, nil, server_message.NewBadRequestError("invalid credentials")
+		return nil, server_message.NewBadRequestError("invalid credentials")
 	}
 }
