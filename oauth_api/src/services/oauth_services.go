@@ -27,7 +27,8 @@ func NewOauthService(jwtrepo repository.JwtRepositoryInterface, loginrepo reposi
 }
 
 func (oauthsvs oauthService) GenerateUser(request users.LoginRequest) (*string, *string, server_message.Svr_message) {
-	uuid, aErr := oauthsvs.loginrepo.LoginUser(context.Background(), request.Poblate(true, nil))
+	login_proto_request := request.Poblate(true, nil)
+	uuid, aErr := oauthsvs.loginrepo.LoginUser(context.Background(), login_proto_request)
 	if aErr != nil {
 		return nil, nil, aErr
 	}
@@ -44,11 +45,11 @@ func (oauthsvs oauthService) GenerateService(request client.ServiceKey) (*string
 }
 
 func (oauthsvs oauthService) Verify(token string) (*entity.Entity, server_message.Svr_message) {
-	claims, aErr := oauthsvs.jwtrepo.UserVerify(token)
+	claims, aErr := oauthsvs.jwtrepo.Verify(token)
 	if aErr != nil {
 		return nil, aErr
 	}
-	if claims.ExpiresAt > time.Now().UTC().Unix() {
+	if claims.ExpiresAt < time.Now().UTC().Unix() {
 		return nil, GetUnauthorizedErr()
 	}
 	return claims, nil

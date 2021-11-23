@@ -27,8 +27,8 @@ func (oauthsvr OauthServer) LoginUser(ctx context.Context, request *proto_oauth.
 		proto_response = &response_with_error
 	} else {
 		proto_response = response
+		proto_response.Response = poblateMessage(OKMessage("user logged succesfully"))
 	}
-	proto_response.Response = poblateMessage(OKMessage("user logged succesfully"))
 	return proto_response, nil
 }
 func (oauthsvr OauthServer) LoginClient(ctx context.Context, request *proto_oauth.ServiceKey) (*proto_oauth.JWTResponse, error) {
@@ -40,8 +40,8 @@ func (oauthsvr OauthServer) LoginClient(ctx context.Context, request *proto_oaut
 		proto_response = &response_with_error
 	} else {
 		proto_response = response
+		proto_response.Response = poblateMessage(OKMessage("client logged succesfully"))
 	}
-	proto_response.Response = poblateMessage(OKMessage("client logged succesfully"))
 	return proto_response, nil
 }
 
@@ -54,8 +54,8 @@ func (oauthsvr OauthServer) Verify(ctx context.Context, request *proto_oauth.JWT
 		proto_response = &response_with_error
 	} else {
 		proto_response = response
+		proto_response.Response = poblateMessage(OKMessage("entity verified succesfully"))
 	}
-	proto_response.Response = poblateMessage(OKMessage("entity verified succesfully"))
 	return proto_response, nil
 }
 

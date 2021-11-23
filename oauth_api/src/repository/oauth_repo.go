@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -20,8 +19,7 @@ type jwtRepository struct {
 type JwtRepositoryInterface interface {
 	GenerateUser(string) (*string, server_message.Svr_message)
 	GenerateService(client.ServiceKey) (*string, server_message.Svr_message)
-	UserVerify(string) (*entity.Entity, server_message.Svr_message)
-	ClientVerify(string) (*entity.Entity, server_message.Svr_message)
+	Verify(string) (*entity.Entity, server_message.Svr_message)
 }
 
 func NewjwtRepository(secretKey string, tokenDuration time.Duration) JwtRepositoryInterface {
@@ -30,11 +28,11 @@ func NewjwtRepository(secretKey string, tokenDuration time.Duration) JwtReposito
 
 func (jR jwtRepository) GenerateUser(user_uuid string) (*string, server_message.Svr_message) {
 	claims := entity.Entity{StandardClaims: jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(jR.tokenDuration).Unix()},
+		ExpiresAt: time.Now().UTC().Add(jR.tokenDuration).Unix()},
 		Uuid:        user_uuid,
 		Permissions: 0,
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	result, err := token.SignedString([]byte(jR.secretKey))
 	if err != nil {
 		logger.Error("error generating JWT ", err)
@@ -53,7 +51,7 @@ func (jR jwtRepository) GenerateService(serviceKey client.ServiceKey) (*string, 
 		Uuid:        "00000000-0000-0000-0000-000000000000",
 		Permissions: *permissions,
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	result, err := token.SignedString([]byte(jR.secretKey))
 	if err != nil {
 		logger.Error("error generating JWT ", err)
@@ -62,7 +60,7 @@ func (jR jwtRepository) GenerateService(serviceKey client.ServiceKey) (*string, 
 	return &result, nil
 }
 
-func (jR jwtRepository) UserVerify(accessToken string) (*entity.Entity, server_message.Svr_message) {
+func (jR jwtRepository) Verify(accessToken string) (*entity.Entity, server_message.Svr_message) {
 	token, err := jwt.ParseWithClaims(
 		accessToken,
 		&entity.Entity{},
@@ -77,37 +75,16 @@ func (jR jwtRepository) UserVerify(accessToken string) (*entity.Entity, server_m
 	)
 
 	if err != nil {
-		return nil, server_message.NewBadRequestError(fmt.Sprint("invalid token: ", accessToken))
+		return nil, GetUnauthorizedErr()
 	}
 
 	claims, ok := token.Claims.(*entity.Entity)
 	if !ok {
-		return nil, server_message.NewBadRequestError("invalid token claims")
+		return nil, GetUnauthorizedErr()
 	}
 	return claims, nil
 }
 
-func (jR jwtRepository) ClientVerify(accessToken string) (*entity.Entity, server_message.Svr_message) {
-	token, err := jwt.ParseWithClaims(
-		accessToken,
-		&entity.Entity{},
-		func(token *jwt.Token) (interface{}, error) {
-			_, ok := token.Method.(*jwt.SigningMethodHMAC)
-			if !ok {
-				return nil, errors.New("unexpected signing method")
-			}
-
-			return []byte(jR.secretKey), nil
-		},
-	)
-
-	if err != nil {
-		return nil, server_message.NewBadRequestError(fmt.Sprint("invalid token: ", accessToken))
-	}
-
-	claims, ok := token.Claims.(*entity.Entity)
-	if !ok {
-		return nil, server_message.NewBadRequestError("invalid token claims")
-	}
-	return claims, nil
+func GetUnauthorizedErr() server_message.Svr_message {
+	return server_message.NewCustomMessage(401, "unauthorized token")
 }
