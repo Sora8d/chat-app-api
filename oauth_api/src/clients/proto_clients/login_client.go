@@ -3,7 +3,7 @@ package proto_clients
 import (
 	"fmt"
 
-	"github.com/flydevs/chat-app-api/common/logger"
+	"github.com/Sora8d/common/logger"
 	proto_users "github.com/flydevs/chat-app-api/oauth-api/src/clients/rpc/login"
 	"github.com/flydevs/chat-app-api/oauth-api/src/config"
 	"google.golang.org/grpc"

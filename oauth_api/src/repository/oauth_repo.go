@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Sora8d/common/logger"
+	"github.com/Sora8d/common/server_message"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/oauth-api/src/domain/client"
 	"github.com/flydevs/chat-app-api/oauth-api/src/domain/entity"
 )

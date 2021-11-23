@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/server_message"
 	proto_oauth "github.com/flydevs/chat-app-api/oauth-api/src/clients/rpc/oauth"
 	"github.com/flydevs/chat-app-api/oauth-api/src/domain/client"
 	"github.com/flydevs/chat-app-api/oauth-api/src/domain/users"

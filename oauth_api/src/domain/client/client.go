@@ -1,8 +1,8 @@
 package client
 
 import (
+	"github.com/Sora8d/common/server_message"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/oauth-api/src/config"
 )
 

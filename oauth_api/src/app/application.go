@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/flydevs/chat-app-api/common/logger"
+	"github.com/Sora8d/common/logger"
 	proto_oauth "github.com/flydevs/chat-app-api/oauth-api/src/clients/rpc/oauth"
 	"github.com/flydevs/chat-app-api/oauth-api/src/config"
 	"github.com/flydevs/chat-app-api/oauth-api/src/controller"

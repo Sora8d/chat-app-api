@@ -3,8 +3,8 @@ module github.com/flydevs/chat-app-api/oauth-api
 go 1.17
 
 require (
+	github.com/Sora8d/common v0.0.0-20211118170033-8e661185d6d9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/flydevs/chat-app-api/common v0.0.0-20211119164248-d496eeea784f
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 )

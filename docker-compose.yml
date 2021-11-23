@@ -31,4 +31,13 @@ services:
             - '8080:8080'
         network_mode: host
         container_name: fd_users_api
-    
+    oauth_api:
+        build:
+            dockerfile: Dockerfile
+            context: ./oauth_api
+        env_file:
+            - oauth_env.list
+        ports:
+            - '8082:8082'
+        network_mode: host
+        container_name: fd_oauth_api
