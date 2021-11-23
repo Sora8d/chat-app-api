@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/flydevs/chat-app-api/common/logger"
 	"github.com/flydevs/chat-app-api/common/server_message"
-	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
+	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users"
 	"github.com/flydevs/chat-app-api/users-api/src/domain/users"
 	"github.com/flydevs/chat-app-api/users-api/src/services"
 	"google.golang.org/grpc/metadata"
@@ -83,6 +85,19 @@ func (us userController) CreateUser(ctx context.Context, ru *pb.RegisterUser) se
 }
 
 func (us userController) UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequest) (*pb.UserProfile, server_message.Svr_message) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		logger.Error("error reading metadata", errors.New("error in UpdateUser, no metadata"))
+		return nil, server_message.NewInternalError()
+	}
+	at_uuid := md.Get("uuid")
+	if at_uuid == nil {
+		logger.Error("error reading metadata", errors.New("error in UpdateUser, uuid is nil"))
+		return nil, server_message.NewInternalError()
+	}
+	if mdur.Content.Uuid.Uuid != at_uuid[0] {
+		return nil, MessageBadPermission()
+	}
 	var request users.UuidandProfile
 	request.Poblate_PrototoStruct(mdur.Content)
 
@@ -107,4 +122,8 @@ func (us userController) DeleteUserByUuid(ctx context.Context, uuid *pb.Uuid) se
 
 func GetNewUserController(svc services.UsersServiceInterface) UserControllerInterface {
 	return userController{svc: svc}
+}
+
+func MessageBadPermission() server_message.Svr_message {
+	return server_message.NewCustomMessage(http.StatusUnauthorized, "unauhorized")
 }

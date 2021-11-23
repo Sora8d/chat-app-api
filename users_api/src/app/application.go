@@ -6,17 +6,22 @@ import (
 
 	"github.com/flydevs/chat-app-api/common/logger"
 	"github.com/flydevs/chat-app-api/users-api/src/clients/postgresql"
-	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
+	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users"
 	"github.com/flydevs/chat-app-api/users-api/src/config"
 	"github.com/flydevs/chat-app-api/users-api/src/controllers"
 	"github.com/flydevs/chat-app-api/users-api/src/repository/db"
+	"github.com/flydevs/chat-app-api/users-api/src/repository/oauth"
 	"github.com/flydevs/chat-app-api/users-api/src/server"
 	"github.com/flydevs/chat-app-api/users-api/src/services"
 	"google.golang.org/grpc"
 )
 
 var (
-	accroles = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
+	accroles = map[string]int{
+		"/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid":    2,
+		"/flydev_chat_app_users.UsersProtoInterface/UpdateUser":       0,
+		"/flydev_chat_app_users.UsersProtoInterface/DeleteUserByUuid": 0,
+	}
 )
 
 // usersOauthService
@@ -30,7 +35,7 @@ func StartApp() {
 	if err != nil {
 		panic(err)
 	}
-	oauth_interceptor := services.NewAuthInterceptor(accroles)
+	oauth_interceptor := services.NewAuthInterceptor(accroles, oauth.GetOauthRepository())
 	var opts []grpc.ServerOption
 	opts = append(opts, grpc.UnaryInterceptor(oauth_interceptor.Unary()))
 	grpcServer := grpc.NewServer(opts...)

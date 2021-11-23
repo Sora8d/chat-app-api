@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/flydevs/chat-app-api/common/server_message"
-	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
+	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users"
 	"github.com/flydevs/chat-app-api/users-api/src/controllers"
 )
 
