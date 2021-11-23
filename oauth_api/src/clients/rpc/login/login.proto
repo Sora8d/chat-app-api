@@ -1,0 +1,30 @@
+syntax= "proto3";
+
+option go_package= "github.com/flydevs/chat-app-api/oauth-api/src/clients/rpc/login";
+
+package flydev_chat_app_users;
+
+service UsersProtoInterface{
+    rpc UserLogin(User) returns (UserMsgResponse) {}
+
+}
+message Uuid {
+    string uuid =1;
+}
+
+message User{
+    int64 id =1;
+    Uuid uuid =2;
+    string login_user =3;
+    string login_password =4;
+}
+
+message Svr_msg{
+    int32 status=1;
+    string message=2;
+}
+
+message UserMsgResponse{
+    repeated User users =1;
+    Svr_msg msg =2;
+}
