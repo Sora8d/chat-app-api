@@ -10,5 +10,5 @@ import (
 
 func appendHeaderAccessToken(header http.Header, ctx context.Context) context.Context {
 	fmt.Println(header.Get("access-token"))
-	return metadata.AppendToOutgoingContext(ctx, "access-token", header.Get("access_token"))
+	return metadata.AppendToOutgoingContext(ctx, "access-token", header.Get("access-token"))
 }
