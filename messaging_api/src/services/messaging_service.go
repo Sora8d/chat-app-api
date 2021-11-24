@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"github.com/flydevs/chat-app-api/common/server_message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
@@ -12,8 +14,8 @@ import (
 
 type MessagingService interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
-	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
-	CreateUserConversation(conversation.CreateUserConversationRequest) server_message.Svr_message
+	CreateMessage(context.Context, message.Message) (*uuids.Uuid, server_message.Svr_message)
+	CreateUserConversation(context.Context, conversation.CreateUserConversationRequest) server_message.Svr_message
 
 	GetConversationsByUser(string) (conversation.ConversationAndParticipantsSlice, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
@@ -46,8 +48,10 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	}
 	return uuid, nil
 }
-func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
-	user, err := ms.proto_users.GetUser([]string{msg.AuthorUuid})
+func (ms *messagingService) CreateMessage(ctx context.Context, msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
+	//get a token
+
+	user, err := ms.proto_users.GetUser(ctx, []string{msg.AuthorUuid})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +82,7 @@ func (ms *messagingService) CreateMessage(msg message.Message) (*uuids.Uuid, ser
 	conversationUuid := uuids.Uuid{Uuid: msg.ConversationUuid}
 	return &conversationUuid, nil
 }
-func (ms *messagingService) CreateUserConversation(userconvo conversation.CreateUserConversationRequest) server_message.Svr_message {
+func (ms *messagingService) CreateUserConversation(ctx context.Context, userconvo conversation.CreateUserConversationRequest) server_message.Svr_message {
 	convo, err := ms.GetConversationByUuid(userconvo.Conversation.Uuid)
 	if err != nil {
 		return err
@@ -86,7 +90,7 @@ func (ms *messagingService) CreateUserConversation(userconvo conversation.Create
 	userconvo.SetConversation(*convo)
 
 	uuids := userconvo.UserConversationSlice.GetUuidsStringSlice()
-	users, err := ms.proto_users.GetUser(uuids)
+	users, err := ms.proto_users.GetUser(ctx, uuids)
 	if err != nil {
 		return err
 	}

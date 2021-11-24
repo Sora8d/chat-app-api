@@ -9,6 +9,7 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/config"
 	"github.com/flydevs/chat-app-api/messaging-api/src/controllers"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/db"
+	"github.com/flydevs/chat-app-api/messaging-api/src/repository/oauth"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/twilio"
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/users_client"
 	"github.com/flydevs/chat-app-api/messaging-api/src/server"
@@ -20,14 +21,20 @@ var (
 	messagingService    services.MessagingService
 	messagingController controllers.MessagingController
 
-//	accroles         = map[string][]string{"/UsersProtoInterface/GetUserByUuid": {"admin"}}
+	accroles = map[string]int{
+		"/flydev_chat_app_messaging.MessagingProtoInterface/CreateConversation":        0,
+		"/flydev_chat_app_messaging.MessagingProtoInterface/GetConversationsByUser":    0,
+		"/flydev_chat_app_messaging.MessagingProtoInterface/UpdateConversationInfo":    0,
+		"/flydev_chat_app_messaging.MessagingProtoInterface/CreateMessage":             0,
+		"/flydev_chat_app_messaging.MessagingProtoInterface/GetMessagesByConversation": 0,
+		"/flydev_chat_app_messaging.MessagingProtoInterface/UpdateMessage":             0,
+		"/flydev_chat_app_messaging.MessagingProtoInterface/CreateUserConversation":    0,
+	}
 )
-
-// usersOauthService
 
 func StartApp() {
 	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.NewTwilioRepository())
-	messagingController = controllers.GetMessagingController(messagingService)
+	messagingController = controllers.GetMessagingController(messagingService, oauth.GetOauthRepository())
 	messagingServer := server.GetMessagingserver(messagingController)
 	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
 	conn, err := net.Listen("tcp", config.Config["PORT"])
@@ -35,7 +42,9 @@ func StartApp() {
 	if err != nil {
 		panic(err)
 	}
+	oauth_interceptor := services.NewAuthInterceptor(accroles, oauth.GetOauthRepository())
 	var opts []grpc.ServerOption
+	opts = append(opts, grpc.UnaryInterceptor(oauth_interceptor.Unary()))
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterMessagingProtoInterfaceServer(grpcServer, messagingServer)
 	grpcServer.Serve(conn)
