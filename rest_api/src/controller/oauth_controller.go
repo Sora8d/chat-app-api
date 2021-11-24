@@ -37,7 +37,7 @@ func (oauthctrl oauthController) LoginUser(c *gin.Context) {
 	}
 	result_response_object, header := oauthctrl.oauthsvs.LoginUser(&new_request)
 	if header != nil {
-		c.Header("access_token", *header)
+		c.Header("access-token", *header)
 	}
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }

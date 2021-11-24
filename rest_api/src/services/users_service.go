@@ -13,33 +13,24 @@ type usersService struct {
 }
 
 type UsersServiceInterface interface {
-	CreateUser(*users.RegisterUser) domain.Response
-	LoginUser(*users.User) domain.Response
-	GetUserProfileByUuid(*users.MultipleUuids) domain.Response
-	UpdateUser(*users.UpdateUserRequest) domain.Response
+	CreateUser(context.Context, *users.RegisterUser) domain.Response
+	GetUserProfileByUuid(context.Context, *users.MultipleUuids) domain.Response
+	UpdateUser(context.Context, *users.UpdateUserRequest) domain.Response
 }
 
 func NewUsersService(users_repo repository.UsersRepositoryInterface) UsersServiceInterface {
 	return &usersService{users_repo: users_repo}
 }
 
-func (us usersService) CreateUser(request *users.RegisterUser) domain.Response {
-	ctx := context.Background()
+func (us usersService) CreateUser(ctx context.Context, request *users.RegisterUser) domain.Response {
 	return Response.CreateResponse(nil, us.users_repo.CreateUser(ctx, request))
 }
 
-func (us usersService) LoginUser(request *users.User) domain.Response {
-	ctx := context.Background()
-	return Response.CreateResponse(us.users_repo.LoginUser(ctx, request))
-
-}
-func (us usersService) GetUserProfileByUuid(request *users.MultipleUuids) domain.Response {
-	ctx := context.Background()
+func (us usersService) GetUserProfileByUuid(ctx context.Context, request *users.MultipleUuids) domain.Response {
 	return Response.CreateResponse(us.users_repo.GetUserProfileByUuid(ctx, request))
 
 }
-func (us usersService) UpdateUser(request *users.UpdateUserRequest) domain.Response {
-	ctx := context.Background()
+func (us usersService) UpdateUser(ctx context.Context, request *users.UpdateUserRequest) domain.Response {
 	return Response.CreateResponse(us.users_repo.UpdateUser(ctx, request))
 
 }

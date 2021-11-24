@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"io/ioutil"
 
 	"github.com/flydevs/chat-app-api/common/server_message"
@@ -16,7 +17,6 @@ type usersController struct {
 
 type UsersControllerInterface interface {
 	CreateUser(*gin.Context)
-	LoginUser(*gin.Context)
 	GetUserProfileByUuid(*gin.Context)
 	UpdateUser(*gin.Context)
 }
@@ -38,24 +38,7 @@ func (uctrl usersController) CreateUser(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := uctrl.us_svs.CreateUser(&new_request)
-	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
-}
-
-func (uctrl usersController) LoginUser(c *gin.Context) {
-	bytes, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		aErr := server_message.NewInternalError()
-		c.JSON(aErr.GetStatus(), aErr)
-		return
-	}
-	new_request := users.User{}
-	if err := protojson.Unmarshal(bytes, &new_request); err != nil {
-		aErr := server_message.NewBadRequestError("invalid json")
-		c.JSON(aErr.GetStatus(), aErr)
-		return
-	}
-	result_response_object := uctrl.us_svs.LoginUser(&new_request)
+	result_response_object := uctrl.us_svs.CreateUser(context.Background(), &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
 func (uctrl usersController) GetUserProfileByUuid(c *gin.Context) {
@@ -71,7 +54,8 @@ func (uctrl usersController) GetUserProfileByUuid(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := uctrl.us_svs.GetUserProfileByUuid(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := uctrl.us_svs.GetUserProfileByUuid(ctx, &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
 func (uctrl usersController) UpdateUser(c *gin.Context) {
@@ -87,6 +71,7 @@ func (uctrl usersController) UpdateUser(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := uctrl.us_svs.UpdateUser(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := uctrl.us_svs.UpdateUser(ctx, &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }

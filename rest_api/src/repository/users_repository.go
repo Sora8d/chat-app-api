@@ -14,7 +14,6 @@ type usersRepository struct {
 
 type UsersRepositoryInterface interface {
 	CreateUser(context.Context, *proto_users.RegisterUser) server_message.Svr_message
-	LoginUser(context.Context, *proto_users.User) (*proto_users.User, server_message.Svr_message)
 	GetUserProfileByUuid(context.Context, *proto_users.MultipleUuids) ([]*proto_users.UserProfile, server_message.Svr_message)
 	UpdateUser(context.Context, *proto_users.UpdateUserRequest) ([]*proto_users.UserProfile, server_message.Svr_message)
 }
@@ -31,16 +30,6 @@ func (ur usersRepository) CreateUser(ctx context.Context, in *proto_users.Regist
 		return server_message.NewInternalError()
 	}
 	return server_message.NewCustomMessage(int(response.Status), response.Message)
-}
-
-func (ur usersRepository) LoginUser(ctx context.Context, in *proto_users.User) (*proto_users.User, server_message.Svr_message) {
-	client := proto_clients.GetUsersClient()
-	response, err := client.Client.UserLogin(ctx, in)
-	if err != nil {
-		logger.Error("error in users_repository,", err)
-		return nil, server_message.NewInternalError()
-	}
-	return response.User, server_message.NewCustomMessage(int(response.Msg.Status), response.Msg.Message)
 }
 
 func (ur usersRepository) GetUserProfileByUuid(ctx context.Context, in *proto_users.MultipleUuids) ([]*proto_users.UserProfile, server_message.Svr_message) {
