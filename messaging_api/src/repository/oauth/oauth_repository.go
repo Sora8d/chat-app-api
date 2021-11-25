@@ -48,7 +48,7 @@ func (oR *oauthRepository) LoginService() (context.Context, server_message.Svr_m
 		}
 		oR.setServiceToken(&response.Jwt)
 	}
-	md := metadata.New(map[string]string{"access_token": *oR.current_access_token})
+	md := metadata.New(map[string]string{"access-token": *oR.current_access_token})
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 	return ctx, nil
 }
