@@ -20,7 +20,7 @@ func GetUsersProtoClient() UserProtoClientRepository {
 
 //Later add secret
 type UserProtoClientRepository interface {
-	GetUser([]string) ([]*users.User, server_message.Svr_message)
+	GetUser(context.Context, []string) ([]*users.User, server_message.Svr_message)
 }
 
 type userProtoClient struct {
@@ -47,13 +47,12 @@ func init() {
 	u_proto.setClient(pb.NewUsersProtoInterfaceClient(c))
 }
 
-func (upc *userProtoClient) GetUser(uuids []string) ([]*users.User, server_message.Svr_message) {
+func (upc *userProtoClient) GetUser(ctx context.Context, uuids []string) ([]*users.User, server_message.Svr_message) {
 	proto_uuids := pb.MultipleUuids{}
 	for _, uuid := range uuids {
 		proto_uuid := pb.Uuid{Uuid: uuid}
 		proto_uuids.Uuids = append(proto_uuids.Uuids, &proto_uuid)
 	}
-	ctx := context.Background()
 	user_msg_response, err := upc.client.GetUserByUuid(ctx, &proto_uuids)
 	if err != nil {
 		logger.Error("Error response from users api", err)

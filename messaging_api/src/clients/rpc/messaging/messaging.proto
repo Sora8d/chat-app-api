@@ -2,7 +2,7 @@ syntax= "proto3";
 
 option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/messaging";
 
-package flydev_chat_app_messaging;
+package flydevs_chat_app_messaging;
 
     service MessagingProtoInterface{
         rpc CreateConversation(Conversation) returns (UuidMsg) {}
@@ -16,7 +16,7 @@ package flydev_chat_app_messaging;
 
         rpc CreateMessage(CreateMessageRequest) returns (UuidMsg) {}
         //Later change userUuid to use JWT info.
-        rpc GetMessagesByConversation(MessageRequest) returns (ArrayMessageResponse) {}
+        rpc GetMessagesByConversation(Uuid) returns (ArrayMessageResponse) {}
         rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
         
         rpc CreateUserConversation(CreateUserConversationRequest) returns (SvrMsg) {}
@@ -78,11 +78,6 @@ message CreateMessageRequest{
     Message message =1;
     bool  create_conversation =3;
     ConversationAndParticipants new_convo=4;
-}
-
-message MessageRequest{
-    Uuid uc_uuid =1;
-    Uuid conversation_uuid =2;
 }
 
 message MessageMsgResponse{

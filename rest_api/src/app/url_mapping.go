@@ -3,6 +3,7 @@ package app
 func mapUrls() {
 	messageUrls()
 	usersUrls()
+	oauthUrls()
 }
 
 func messageUrls() {
@@ -17,7 +18,10 @@ func messageUrls() {
 
 func usersUrls() {
 	router.POST("/user", users_controller.CreateUser)
-	router.POST("/login", users_controller.LoginUser)
 	router.GET("/user", users_controller.GetUserProfileByUuid)
 	router.PUT("/user", users_controller.UpdateUser)
+}
+
+func oauthUrls() {
+	router.POST("/login", oauth_controller.LoginUser)
 }

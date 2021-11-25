@@ -8,7 +8,8 @@ var Config map[string]string
 
 func init() {
 	Config = map[string]string{
-		"DATABASE": os.Getenv("DATABASE_URL"),
-		"PORT":     os.Getenv("PORT"),
+		"DATABASE":      os.Getenv("DATABASE_URL"),
+		"PORT":          os.Getenv("PORT"),
+		"OAUTH_ADDRESS": os.Getenv("OAUTH_ADDRESS"),
 	}
 }

@@ -1,6 +1,6 @@
 package users
 
-import pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
+import pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users"
 
 func (us User) Poblate_StructtoProto(pu *pb.User) {
 	pu.Id = us.Id

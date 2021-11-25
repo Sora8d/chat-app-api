@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"io/ioutil"
 
 	"github.com/Sora8d/common/server_message"
@@ -41,7 +42,8 @@ func (mc messagingController) CreateMessage(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.CreateMessage(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.CreateMessage(ctx, &new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -59,7 +61,8 @@ func (mc messagingController) CreateConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.CreateConversation(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.CreateConversation(ctx, &new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -77,8 +80,8 @@ func (mc messagingController) CreateUserConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.CreateUserConversation(&new_request)
-
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.CreateUserConversation(ctx, &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
 
@@ -95,7 +98,8 @@ func (mc messagingController) GetConversationsByUser(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.GetConversationsByUser(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.GetConversationsByUser(ctx, &new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -107,13 +111,14 @@ func (mc messagingController) GetMessagesByConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	new_request := messaging.MessageRequest{}
+	new_request := messaging.Uuid{}
 	if err := protojson.Unmarshal(bytes, &new_request); err != nil {
 		aErr := server_message.NewBadRequestError("invalid json")
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.GetMessagesByConversation(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.GetMessagesByConversation(ctx, &new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -131,7 +136,8 @@ func (mc messagingController) UpdateMessage(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.UpdateMessage(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.UpdateMessage(ctx, &new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
@@ -149,7 +155,8 @@ func (mc messagingController) UpdateConversationInfo(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	result_response_object := mc.msg_svs.UpdateConversationInfo(&new_request)
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := mc.msg_svs.UpdateConversationInfo(ctx, &new_request)
 
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }

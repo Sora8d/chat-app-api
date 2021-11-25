@@ -1,6 +1,6 @@
 syntax= "proto3";
 
-option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc";
+option go_package= "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users";
 
 package flydev_chat_app_users;
 

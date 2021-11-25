@@ -32,7 +32,7 @@
 }
 - LoginUser:
 /login
-{"login_user": "123", "login_password": "1234"}
+{"username": "123", "password": "1234"}
 
 - GetUserProfileByUuid:
 /user

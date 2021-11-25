@@ -55,6 +55,7 @@ type MessagingDBRepository interface {
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 
+	GetMessageByUuid(string) (*message.Message, server_message.Svr_message)
 	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
 
@@ -62,6 +63,8 @@ type MessagingDBRepository interface {
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 
 	GetUserConversationByUuid(string) (*conversation.UserConversation, server_message.Svr_message)
+
+	FetchUserConversationByUserUuidConversationUuid(user_uuid string, convo_uuid string) (*string, server_message.Svr_message)
 }
 
 type messagingDBRepository struct {
@@ -147,6 +150,27 @@ func (dbr *messagingDBRepository) CreateMessage(msg message.Message) (*uuids.Uui
 	}
 	return &uuid, nil
 }
+
+func (dbr *messagingDBRepository) GetMessageByUuid(message_uuid string) (*message.Message, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	query := GoquDialect.From("message_table").Select("id", "uuid", "twilio_sid", "conversation_id", "conversation_uuid", "author_id", "author_uuid", "body", goqu.L("date_part('epoch',created_at)")).Where(goqu.Ex{"uuid": message_uuid})
+	ToSQL, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error generating goqu sql in GetMessageByUuid", err)
+		return nil, server_message.NewInternalError()
+	}
+	row := dbclient.QueryRow(ToSQL)
+	var result_message message.Message
+	if err = row.Scan(&result_message.Id, &result_message.Uuid, &result_message.TwilioSid, &result_message.ConversationId, &result_message.ConversationUuid, &result_message.AuthorId, &result_message.AuthorUuid, &result_message.Text, &result_message.CreatedAt); err != nil {
+		if err.Error() == errNoRows {
+			return nil, server_message.NewNotFoundError("message not found")
+		}
+		logger.Error("error in scan sql in GetMessageByUuid", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &result_message, nil
+}
+
 func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string) ([]message.Message, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	rows, err := dbclient.Query(queryGetMessagesByConversationUuid, uuid)
@@ -199,34 +223,13 @@ func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.Crea
 	return nil
 }
 
-func (dbr *messagingDBRepository) getUserConversationsForConversation(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
-	dbclient := postgresql.GetSession()
-	rows, err := dbclient.Query(queryGetUserConversationForConversation, uuid)
-	if err != nil {
-		logger.Error("error in GetUserConversationForConversation function, getting rows", err)
-		return nil, server_message.NewInternalError()
-	}
-	ucs := []conversation.UserConversation{}
-	for rows.Next() {
-		uc := conversation.UserConversation{}
-		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.TwilioSid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
-			logger.Error("error in GetUserConversationForConversation function, scanning rows", err)
-			return nil, server_message.NewInternalError()
-		}
-		ucs = append(ucs, uc)
-	}
-	if len(ucs) == 0 {
-		return nil, server_message.NewNotFoundError("no user_conversations where found")
-	}
-	return ucs, nil
-}
 func (dbr *messagingDBRepository) GetUserConversationByUuid(uuid string) (*conversation.UserConversation, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	row := dbclient.QueryRow(queryGetUserConversationByUuid, uuid)
 	uc := conversation.UserConversation{}
 	if err := row.Scan(&uc.Id, &uc.Uuid, &uc.TwilioSid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
 		if err.Error() == errNoRows {
-			return nil, server_message.NewNotFoundError("not found")
+			return nil, server_message.NewNotFoundError("given conversation not found for this user")
 		}
 		logger.Error("error in GetUserConversationByUuid function", err)
 		return nil, server_message.NewInternalError()
@@ -257,4 +260,46 @@ func (dbr *messagingDBRepository) GetConversationByUuid(uuid string) (*conversat
 		return nil, server_message.NewInternalError()
 	}
 	return &convo, nil
+}
+
+func (dbr *messagingDBRepository) FetchUserConversationByUserUuidConversationUuid(user_uuid, convo_uuid string) (*string, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	query := GoquDialect.From("user_conversation").Select("uuid").Where(goqu.Ex{"user_uuid": user_uuid, "conversation_uuid": convo_uuid})
+	ToSQL, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error generating goqu sql in FetchUserConversationUserUuidConversationUuid", err)
+		return nil, server_message.NewInternalError()
+	}
+	row := dbclient.QueryRow(ToSQL)
+	var result_uuid string
+	if err = row.Scan(&result_uuid); err != nil {
+		if err.Error() == errNoRows {
+			return nil, server_message.NewNotFoundError("given conversation not found for this user")
+		}
+		logger.Error("error in scan sql in FetchUserConversationUserUuidConversationUuid", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &result_uuid, nil
+}
+
+func (dbr *messagingDBRepository) getUserConversationsForConversation(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	rows, err := dbclient.Query(queryGetUserConversationForConversation, uuid)
+	if err != nil {
+		logger.Error("error in GetUserConversationForConversation function, getting rows", err)
+		return nil, server_message.NewInternalError()
+	}
+	ucs := []conversation.UserConversation{}
+	for rows.Next() {
+		uc := conversation.UserConversation{}
+		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.TwilioSid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
+			logger.Error("error in GetUserConversationForConversation function, scanning rows", err)
+			return nil, server_message.NewInternalError()
+		}
+		ucs = append(ucs, uc)
+	}
+	if len(ucs) == 0 {
+		return nil, server_message.NewNotFoundError("no user_conversations where found")
+	}
+	return ucs, nil
 }
