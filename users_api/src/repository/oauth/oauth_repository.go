@@ -10,15 +10,12 @@ import (
 type oauthRepository struct{}
 
 type OauthRepositoryInterface interface {
-	LoginService()
 	Verify(string) (*oauth.EntityResponse, error)
 }
 
 func GetOauthRepository() OauthRepositoryInterface {
 	return &oauthRepository{}
 }
-
-func (oauthRepository) LoginService()
 
 func (oauthRepository) Verify(jwt string) (*oauth.EntityResponse, error) {
 	client := proto_clients.GetOauthClient()
