@@ -4,11 +4,7 @@ import (
 	"fmt"
 	"net"
 
-<<<<<<< HEAD
 	"github.com/Sora8d/common/logger"
-=======
-	"github.com/flydevs/chat-app-api/common/logger"
->>>>>>> main
 	"github.com/flydevs/chat-app-api/users-api/src/clients/postgresql"
 	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users"
 	"github.com/flydevs/chat-app-api/users-api/src/config"

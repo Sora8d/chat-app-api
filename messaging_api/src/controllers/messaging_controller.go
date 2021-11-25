@@ -4,12 +4,8 @@ import (
 	"context"
 	"errors"
 
-<<<<<<< HEAD
+	"github.com/Sora8d/common/logger"
 	"github.com/Sora8d/common/server_message"
-=======
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
->>>>>>> main
 	proto_messaging "github.com/flydevs/chat-app-api/messaging-api/src/clients/rpc/messaging"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"

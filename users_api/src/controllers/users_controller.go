@@ -6,15 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-<<<<<<< HEAD
 	"github.com/Sora8d/common/logger"
 	"github.com/Sora8d/common/server_message"
-	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc"
-=======
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
 	pb "github.com/flydevs/chat-app-api/users-api/src/clients/rpc/users"
->>>>>>> main
 	"github.com/flydevs/chat-app-api/users-api/src/domain/users"
 	"github.com/flydevs/chat-app-api/users-api/src/services"
 	"google.golang.org/grpc/metadata"

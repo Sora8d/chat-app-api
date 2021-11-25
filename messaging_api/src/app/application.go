@@ -34,11 +34,7 @@ var (
 
 func StartApp() {
 	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.GetTwilioMock())
-<<<<<<< HEAD
-	messagingController = controllers.GetMessagingController(messagingService)
-=======
 	messagingController = controllers.GetMessagingController(messagingService, oauth.GetOauthRepository())
->>>>>>> main
 	messagingServer := server.GetMessagingserver(messagingController)
 	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
 	conn, err := net.Listen("tcp", config.Config["PORT"])

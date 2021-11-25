@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/server_message"
 	"github.com/flydevs/chat-app-api/rest-api/src/clients/rpc/oauth"
 	"github.com/flydevs/chat-app-api/rest-api/src/domain"
 	"github.com/flydevs/chat-app-api/rest-api/src/repository"

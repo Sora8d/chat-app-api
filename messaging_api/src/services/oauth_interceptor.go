@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/flydevs/chat-app-api/common/logger"
+	"github.com/Sora8d/common/logger"
 	oauth_domain "github.com/flydevs/chat-app-api/messaging-api/src/domain/oauth"
 	oauth_repo "github.com/flydevs/chat-app-api/messaging-api/src/repository/oauth"
 	"google.golang.org/grpc"

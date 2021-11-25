@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/logger"
+	"github.com/Sora8d/common/server_message"
 	"github.com/flydevs/chat-app-api/rest-api/src/clients/proto_clients"
 	"github.com/flydevs/chat-app-api/rest-api/src/clients/rpc/oauth"
 )

@@ -1,2 +1,3 @@
 PORT=:8080
 DATABASE_URL=postgres://test:123@localhost:5433/postgres
+OAUTH_ADDRESS=:8082

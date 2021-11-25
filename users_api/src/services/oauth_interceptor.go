@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	"github.com/flydevs/chat-app-api/common/logger"
+	"github.com/Sora8d/common/logger"
 	"github.com/flydevs/chat-app-api/users-api/src/repository/oauth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

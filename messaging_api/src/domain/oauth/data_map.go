@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/flydevs/chat-app-api/common/logger"
-	"github.com/flydevs/chat-app-api/common/server_message"
+	"github.com/Sora8d/common/logger"
+	"github.com/Sora8d/common/server_message"
 )
 
 type OauthDataMap map[string]string

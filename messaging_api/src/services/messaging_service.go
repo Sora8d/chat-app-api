@@ -1,13 +1,9 @@
 package services
 
 import (
-<<<<<<< HEAD
-	"github.com/Sora8d/common/server_message"
-=======
 	"context"
 
-	"github.com/flydevs/chat-app-api/common/server_message"
->>>>>>> main
+	"github.com/Sora8d/common/server_message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/uuids"
