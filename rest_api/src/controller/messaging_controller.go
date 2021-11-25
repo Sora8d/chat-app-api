@@ -111,7 +111,7 @@ func (mc messagingController) GetMessagesByConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	new_request := messaging.MessageRequest{}
+	new_request := messaging.Uuid{}
 	if err := protojson.Unmarshal(bytes, &new_request); err != nil {
 		aErr := server_message.NewBadRequestError("invalid json")
 		c.JSON(aErr.GetStatus(), aErr)
