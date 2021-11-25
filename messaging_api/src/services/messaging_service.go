@@ -14,15 +14,15 @@ import (
 
 type MessagingService interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
-	CreateMessage(context.Context, message.Message) (*uuids.Uuid, server_message.Svr_message)
-	CreateUserConversation(context.Context, conversation.CreateUserConversationRequest) server_message.Svr_message
+	CreateMessage(context.Context, string, message.Message) (*uuids.Uuid, server_message.Svr_message)
+	CreateUserConversation(context.Context, string, bool, conversation.CreateUserConversationRequest) server_message.Svr_message
 
 	GetConversationsByUser(string) (conversation.ConversationAndParticipantsSlice, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
-	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
+	UpdateConversationInfo(string, string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
 	GetMessagesByConversation(string, string) (message.MessageSlice, server_message.Svr_message)
-	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
+	UpdateMessage(string, string, string) (*message.Message, server_message.Svr_message)
 }
 type messagingService struct {
 	dbrepo      db.MessagingDBRepository
@@ -48,9 +48,7 @@ func (ms *messagingService) CreateConversation(convo conversation.Conversation) 
 	}
 	return uuid, nil
 }
-func (ms *messagingService) CreateMessage(ctx context.Context, msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
-	//get a token
-
+func (ms *messagingService) CreateMessage(ctx context.Context, verification_uuid string, msg message.Message) (*uuids.Uuid, server_message.Svr_message) {
 	user, err := ms.proto_users.GetUser(ctx, []string{msg.AuthorUuid})
 	if err != nil {
 		return nil, err
@@ -62,6 +60,11 @@ func (ms *messagingService) CreateMessage(ctx context.Context, msg message.Messa
 		return nil, err
 	}
 	msg.SetConversationId(convo.Id)
+
+	_, err = ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(verification_uuid, msg.ConversationUuid)
+	if err != nil {
+		return nil, err
+	}
 	//Twilio---
 	sid, err := ms.twiorepo.CreateMessage(convo.TwilioSid, msg)
 	if err != nil {
@@ -82,29 +85,36 @@ func (ms *messagingService) CreateMessage(ctx context.Context, msg message.Messa
 	conversationUuid := uuids.Uuid{Uuid: msg.ConversationUuid}
 	return &conversationUuid, nil
 }
-func (ms *messagingService) CreateUserConversation(ctx context.Context, userconvo conversation.CreateUserConversationRequest) server_message.Svr_message {
-	convo, err := ms.GetConversationByUuid(userconvo.Conversation.Uuid)
+func (ms *messagingService) CreateUserConversation(ctx context.Context, verification_uuid string, verify_uuid bool, userconvos_request conversation.CreateUserConversationRequest) server_message.Svr_message {
+	convo, err := ms.GetConversationByUuid(userconvos_request.Conversation.Uuid)
 	if err != nil {
 		return err
 	}
-	userconvo.SetConversation(*convo)
+	//Verification about user provided token belongingness to conversation
+	if verify_uuid {
+		_, err = ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(verification_uuid, userconvos_request.Conversation.Uuid)
+		if err != nil {
+			return err
+		}
+	}
+	userconvos_request.SetConversation(*convo)
 
-	uuids := userconvo.UserConversationSlice.GetUuidsStringSlice()
+	uuids := userconvos_request.UserConversationSlice.GetUuidsStringSlice()
 	users, err := ms.proto_users.GetUser(ctx, uuids)
 	if err != nil {
 		return err
 	}
-	userconvo.UserConversationSlice.ParseIds(users)
-	for i, uc := range userconvo.UserConversationSlice {
+	userconvos_request.UserConversationSlice.ParseIds(users)
+	for i, uc := range userconvos_request.UserConversationSlice {
 		//Twilio---
 		sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, uc.UserUuid)
 		if err != nil {
 			return err
 		}
-		userconvo.UserConversationSlice[i].SetTwilioSid(*sid)
+		userconvos_request.UserConversationSlice[i].SetTwilioSid(*sid)
 		//---
 	}
-	err = ms.dbrepo.CreateUserConversation(userconvo)
+	err = ms.dbrepo.CreateUserConversation(userconvos_request)
 	if err != nil {
 		return err
 	}
@@ -129,8 +139,13 @@ func (ms *messagingService) GetConversationByUuid(uuid string) (*conversation.Co
 	}
 	return conversation, nil
 }
-func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
-	convo, err := ms.dbrepo.UpdateConversationInfo(uuid, conv_info)
+func (ms *messagingService) UpdateConversationInfo(convo_uuid string, verification_uuid string, conv_info conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message) {
+	//Verification about user provided token belongingness to conversation
+	_, err := ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(verification_uuid, convo_uuid)
+	if err != nil {
+		return nil, err
+	}
+	convo, err := ms.dbrepo.UpdateConversationInfo(convo_uuid, conv_info)
 	if err != nil {
 		return nil, err
 	}
@@ -140,12 +155,16 @@ func (ms *messagingService) UpdateConversationInfo(uuid string, conv_info conver
 
 //
 
-func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid string) (message.MessageSlice, server_message.Svr_message) {
+func (ms *messagingService) GetMessagesByConversation(user_uuid string, convo_uuid string) (message.MessageSlice, server_message.Svr_message) {
 	messages, err := ms.dbrepo.GetMessagesByConversation(convo_uuid)
 	if err != nil {
 		return nil, err
 	}
-	_, err = ms.dbrepo.UserConversationUpdateLastAccess(uc_uuid, messages[len(messages)-1].Uuid)
+	uc_uuid, err := ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(user_uuid, convo_uuid)
+	if err != nil {
+		return nil, err
+	}
+	_, err = ms.dbrepo.UserConversationUpdateLastAccess(*uc_uuid, messages[len(messages)-1].Uuid)
 	if err != nil {
 		if err.GetStatus() == 404 {
 			return nil, server_message.NewBadRequestError("the given user doesnt form part of the conversation")
@@ -155,8 +174,17 @@ func (ms *messagingService) GetMessagesByConversation(uc_uuid string, convo_uuid
 
 	return messages, nil
 }
-func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
-	message, err := ms.dbrepo.UpdateMessage(uuid, text)
+func (ms *messagingService) UpdateMessage(message_uuid, verification_uuid, text string) (*message.Message, server_message.Svr_message) {
+	verify_message, err := ms.dbrepo.GetMessageByUuid(message_uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok := compareUuids(verification_uuid, verify_message.AuthorUuid); !ok {
+		return nil, server_message.NewBadRequestError("message doesnt belong to given user")
+	}
+
+	message, err := ms.dbrepo.UpdateMessage(message_uuid, text)
 	if err != nil {
 		return nil, err
 	}
@@ -171,4 +199,8 @@ func (ms *messagingService) UpdateMessage(uuid string, text string) (*message.Me
 	message.SetConversationUuid("")
 	return message, nil
 
+}
+
+func compareUuids(uuid1, uuid2 string) bool {
+	return uuid1 == uuid2
 }

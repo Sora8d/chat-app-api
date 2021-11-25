@@ -27,7 +27,7 @@ type MessagingController interface {
 	CreateMessage(context.Context, *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message)
 	CreateUserConversation(context.Context, *proto_messaging.CreateUserConversationRequest) server_message.Svr_message
 	GetConversationsByUser(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.ConversationAndParticipants, server_message.Svr_message)
-	GetMessagesByConversation(context.Context, *proto_messaging.MessageRequest) ([]*proto_messaging.Message, server_message.Svr_message)
+	GetMessagesByConversation(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.Message, server_message.Svr_message)
 	UpdateConversationInfo(context.Context, *proto_messaging.Conversation) (*proto_messaging.Conversation, server_message.Svr_message)
 	UpdateMessage(context.Context, *proto_messaging.Message) (*proto_messaging.Message, server_message.Svr_message)
 }
@@ -41,14 +41,19 @@ func (mc messagingController) CreateConversation(ctx context.Context, pbc *proto
 	if aErr != nil {
 		return nil, aErr
 	}
+
 	var new_conversation conversation.Conversation
 	new_conversation.Poblate(false, pbc)
-	result_uuid, err := mc.svc.CreateConversation(new_conversation)
-	proto_uuid := proto_messaging.Uuid{}
-	if result_uuid != nil {
-		result_uuid.Poblate(true, &proto_uuid)
+	result_uuid, aErr := mc.svc.CreateConversation(new_conversation)
+	if aErr != nil {
+		return nil, aErr
 	}
-	return &proto_uuid, err
+
+	proto_uuid := proto_messaging.Uuid{}
+
+	result_uuid.Poblate(true, &proto_uuid)
+
+	return &proto_uuid, nil
 }
 
 func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message) {
@@ -60,7 +65,7 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 	if aErr != nil {
 		return nil, aErr
 	}
-	if ok := CompareUuids(*at_uuid, pbm.Message.AuthorUuid.Uuid); !ok {
+	if ok := compareUuids(*at_uuid, pbm.Message.AuthorUuid.Uuid); !ok {
 		return nil, oauth.GetError("2")
 	}
 
@@ -83,7 +88,7 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 		ucs := conversation.CreateUserConversationRequest{}
 		ucs.SetUserConversationSlice(data.Participants)
 		ucs.SetConversation(conversation.Conversation{Uuid: convo_uuid.Uuid})
-		err = mc.svc.CreateUserConversation(ctx_with_client_token, ucs)
+		err = mc.svc.CreateUserConversation(ctx_with_client_token, *at_uuid, false, ucs)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +101,7 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 		new_message.SetConversationUuid(conversation_uuid.Uuid)
 	}
 
-	result_conversation_uuid, err := mc.svc.CreateMessage(ctx_with_client_token, new_message)
+	result_conversation_uuid, err := mc.svc.CreateMessage(ctx_with_client_token, *at_uuid, new_message)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +111,11 @@ func (mc messagingController) CreateMessage(ctx context.Context, pbm *proto_mess
 }
 
 func (mc messagingController) CreateUserConversation(ctx context.Context, pbuc *proto_messaging.CreateUserConversationRequest) server_message.Svr_message {
-	_, aErr := validateContext(ctx)
+	md, aErr := validateContext(ctx)
+	if aErr != nil {
+		return aErr
+	}
+	verification_uuid, aErr := fetchUuid(md)
 	if aErr != nil {
 		return aErr
 	}
@@ -117,7 +126,7 @@ func (mc messagingController) CreateUserConversation(ctx context.Context, pbuc *
 	var new_user_conversation conversation.CreateUserConversationRequest
 	new_user_conversation.Poblate(pbuc.UserConversations)
 	new_user_conversation.SetConversation(conversation.Conversation{Uuid: pbuc.ConversationUuid.Uuid})
-	err := mc.svc.CreateUserConversation(ctx_with_client_token, new_user_conversation)
+	err := mc.svc.CreateUserConversation(ctx_with_client_token, *verification_uuid, true, new_user_conversation)
 	return err
 }
 
@@ -132,7 +141,7 @@ func (mc messagingController) GetConversationsByUser(ctx context.Context, proto_
 	if aErr != nil {
 		return nil, aErr
 	}
-	if ok := CompareUuids(*at_uuid, proto_user_uuid.Uuid); !ok {
+	if ok := compareUuids(*at_uuid, proto_user_uuid.Uuid); !ok {
 		return nil, oauth.GetError("2")
 	}
 	conversation_participants, err := mc.svc.GetConversationsByUser(proto_user_uuid.Uuid)
@@ -144,13 +153,17 @@ func (mc messagingController) GetConversationsByUser(ctx context.Context, proto_
 }
 
 //
-
-func (mc messagingController) GetMessagesByConversation(ctx context.Context, pbuuid *proto_messaging.MessageRequest) ([]*proto_messaging.Message, server_message.Svr_message) {
-	_, aErr := validateContext(ctx)
+func (mc messagingController) GetMessagesByConversation(ctx context.Context, convo_uuid *proto_messaging.Uuid) ([]*proto_messaging.Message, server_message.Svr_message) {
+	md, aErr := validateContext(ctx)
 	if aErr != nil {
 		return nil, aErr
 	}
-	messages, err := mc.svc.GetMessagesByConversation(pbuuid.UcUuid.Uuid, pbuuid.ConversationUuid.Uuid)
+	verification_uuid, aErr := fetchUuid(md)
+	if aErr != nil {
+		return nil, aErr
+	}
+
+	messages, err := mc.svc.GetMessagesByConversation(*verification_uuid, convo_uuid.Uuid)
 	if err != nil {
 		return nil, err
 	}
@@ -159,14 +172,18 @@ func (mc messagingController) GetMessagesByConversation(ctx context.Context, pbu
 }
 
 func (mc messagingController) UpdateConversationInfo(ctx context.Context, pb_convo *proto_messaging.Conversation) (*proto_messaging.Conversation, server_message.Svr_message) {
-	_, aErr := validateContext(ctx)
+	md, aErr := validateContext(ctx)
+	if aErr != nil {
+		return nil, aErr
+	}
+	verification_uuid, aErr := fetchUuid(md)
 	if aErr != nil {
 		return nil, aErr
 	}
 
 	var request_convo conversation.Conversation
 	request_convo.Poblate(false, pb_convo)
-	conversation_updated, err := mc.svc.UpdateConversationInfo(request_convo.Uuid, request_convo.ConversationInfo)
+	conversation_updated, err := mc.svc.UpdateConversationInfo(request_convo.Uuid, *verification_uuid, request_convo.ConversationInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -176,12 +193,16 @@ func (mc messagingController) UpdateConversationInfo(ctx context.Context, pb_con
 }
 
 func (mc messagingController) UpdateMessage(ctx context.Context, pb_message *proto_messaging.Message) (*proto_messaging.Message, server_message.Svr_message) {
-	_, aErr := validateContext(ctx)
+	md, aErr := validateContext(ctx)
+	if aErr != nil {
+		return nil, aErr
+	}
+	verification_uuid, aErr := fetchUuid(md)
 	if aErr != nil {
 		return nil, aErr
 	}
 
-	message_updated, err := mc.svc.UpdateMessage(pb_message.Uuid.Uuid, pb_message.Text)
+	message_updated, err := mc.svc.UpdateMessage(pb_message.Uuid.Uuid, *verification_uuid, pb_message.Text)
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +234,6 @@ func fetchUuid(md metadata.MD) (*string, server_message.Svr_message) {
 	return &at_uuid[0], nil
 }
 
-func CompareUuids(uuid1, uuid2 string) bool {
+func compareUuids(uuid1, uuid2 string) bool {
 	return uuid1 == uuid2
 }

@@ -22,18 +22,18 @@ var (
 	messagingController controllers.MessagingController
 
 	accroles = map[string]int{
-		"/flydev_chat_app_messaging.MessagingProtoInterface/CreateConversation":        0,
-		"/flydev_chat_app_messaging.MessagingProtoInterface/GetConversationsByUser":    0,
-		"/flydev_chat_app_messaging.MessagingProtoInterface/UpdateConversationInfo":    0,
-		"/flydev_chat_app_messaging.MessagingProtoInterface/CreateMessage":             0,
-		"/flydev_chat_app_messaging.MessagingProtoInterface/GetMessagesByConversation": 0,
-		"/flydev_chat_app_messaging.MessagingProtoInterface/UpdateMessage":             0,
-		"/flydev_chat_app_messaging.MessagingProtoInterface/CreateUserConversation":    0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/CreateConversation":        0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/GetConversationsByUser":    0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/UpdateConversationInfo":    0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/CreateMessage":             0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/GetMessagesByConversation": 0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/UpdateMessage":             0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/CreateUserConversation":    0,
 	}
 )
 
 func StartApp() {
-	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.NewTwilioRepository())
+	messagingService = services.NewMessagingService(db.GetMessagingDBRepository(), users_client.GetUsersProtoClient(), twilio.GetTwilioMock())
 	messagingController = controllers.GetMessagingController(messagingService, oauth.GetOauthRepository())
 	messagingServer := server.GetMessagingserver(messagingController)
 	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
