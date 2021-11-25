@@ -43,7 +43,7 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 	inc_md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		//This error handling is awful, change it after you update the oauth service
-		values := inc_md.Get("access_token")
+		values := inc_md.Get("access-token")
 		if len(values) == 0 {
 			return nil, status.Errorf(codes.Unauthenticated, "access_token not provided")
 		}
