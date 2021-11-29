@@ -15,13 +15,25 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartApp() {
-	var expire_duration time.Duration = 3 * time.Hour
-	jwt_key := config.Config["SECRET_KEY"]
+var (
+	dbrepo repository.DbRepositoryInterface
+)
 
-	Oauth_server := server.GetNewServer(controller.GetNewOauthController(services.NewOauthService(repository.NewjwtRepository(jwt_key, expire_duration), repository.NewLoginRepository())))
+func StartApp() {
+	var expire_duration time.Duration = time.Duration(config.Config["ACCESSTOKEN_EXPIRATION"].(int)) * time.Minute
+	var refresh_token_duration time.Duration = time.Duration(config.Config["REFRESH_EXPIRATION"].(int)) * time.Minute
+	jwt_key := config.Config["SECRET_KEY"].(string)
+
+	dbrepo = repository.NewDbRepository()
+
+	Oauth_server := server.GetNewServer(controller.GetNewOauthController(
+		services.NewOauthService(
+			repository.NewjwtRepository(jwt_key),
+			repository.NewLoginRepository(),
+			dbrepo,
+			expire_duration, refresh_token_duration)))
 	logger.Info(fmt.Sprintf("initating app on %s...", config.Config["PORT"]))
-	conn, err := net.Listen("tcp", config.Config["PORT"])
+	conn, err := net.Listen("tcp", config.Config["PORT"].(string))
 	fmt.Sprintln(conn)
 	if err != nil {
 		panic(err)
@@ -29,5 +41,19 @@ func StartApp() {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	proto_oauth.RegisterOauthProtoInterfaceServer(grpcServer, Oauth_server)
+	go cleanTokens()
 	grpcServer.Serve(conn)
+
+}
+func cleanTokens() {
+	for {
+		fmt.Println("running")
+		expiration_int := config.Config["REFRESH_EXPIRATION"].(int)
+		time.Sleep(time.Duration(expiration_int) * time.Minute)
+		intervals := fmt.Sprintf("%d minutes", expiration_int)
+		err := dbrepo.CleanTokens(intervals)
+		if err != nil {
+			logger.Error("error cloaning tokens", err)
+		}
+	}
 }

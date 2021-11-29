@@ -18,11 +18,11 @@ func GetNewServer(oauthctrl controller.OauthControllerInterface) *OauthServer {
 	return &OauthServer{oauthctrl: oauthctrl}
 }
 
-func (oauthsvr OauthServer) LoginUser(ctx context.Context, request *proto_oauth.LoginRequest) (*proto_oauth.JWTAndUuidResponse, error) {
-	var proto_response *proto_oauth.JWTAndUuidResponse
+func (oauthsvr OauthServer) LoginUser(ctx context.Context, request *proto_oauth.LoginRequest) (*proto_oauth.JWTwRrefreshUuidResponse, error) {
+	var proto_response *proto_oauth.JWTwRrefreshUuidResponse
 	response, aErr := oauthsvr.oauthctrl.GenerateUser(ctx, request)
 	if aErr != nil {
-		response_with_error := proto_oauth.JWTAndUuidResponse{}
+		response_with_error := proto_oauth.JWTwRrefreshUuidResponse{}
 		response_with_error.Response = poblateMessage(aErr)
 		proto_response = &response_with_error
 	} else {
@@ -55,6 +55,30 @@ func (oauthsvr OauthServer) Verify(ctx context.Context, request *proto_oauth.JWT
 	} else {
 		proto_response = response
 		proto_response.Response = poblateMessage(OKMessage("entity verified succesfully"))
+	}
+	return proto_response, nil
+}
+
+func (oauthsvr OauthServer) ValidateRefreshToken(ctx context.Context, request *proto_oauth.JWT) (*proto_oauth.JWTwRrefreshUuidResponse, error) {
+	var proto_response *proto_oauth.JWTwRrefreshUuidResponse
+	response, aErr := oauthsvr.oauthctrl.ValidateRefreshToken(ctx, request)
+	if aErr != nil {
+		response_with_error := proto_oauth.JWTwRrefreshUuidResponse{}
+		response_with_error.Response = poblateMessage(aErr)
+		proto_response = &response_with_error
+	} else {
+		proto_response = response
+		proto_response.Response = poblateMessage(OKMessage("refresh token accepted succesfully"))
+	}
+	return proto_response, nil
+}
+
+func (oauthsvr OauthServer) RevokeUsersTokens(ctx context.Context, request *proto_oauth.Uuid) (*proto_oauth.SvrMsg, error) {
+	var proto_response *proto_oauth.SvrMsg
+	if aErr := oauthsvr.oauthctrl.RevokeUsersTokens(ctx, request); aErr != nil {
+		proto_response = poblateMessage(aErr)
+	} else {
+		proto_response = poblateMessage(OKMessage("tokens blocked"))
 	}
 	return proto_response, nil
 }

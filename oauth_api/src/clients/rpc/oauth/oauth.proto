@@ -5,10 +5,13 @@ option go_package= "github.com/flydevs/chat-app-api/oauth-api/src/clients/rpc/oa
 package flydev_chat_oauth;
 
 service OauthProtoInterface{
-    rpc LoginUser (LoginRequest) returns (JWTAndUuidResponse) {}
+    rpc LoginUser (LoginRequest) returns (JWTwRrefreshUuidResponse) {}
     rpc LoginClient(ServiceKey) returns (JWTResponse) {}
 
     rpc Verify (JWT) returns (EntityResponse){}
+    rpc ValidateRefreshToken (JWT) returns (JWTwRrefreshUuidResponse) {}
+
+    rpc RevokeUsersTokens (Uuid) returns (Svr_msg) {}
 }
 
 message LoginRequest{
@@ -32,10 +35,11 @@ message JWTResponse{
     Svr_msg Response =2;
 }
 
-message JWTAndUuidResponse{
-    string Jwt = 1;
-    Uuid Uuid=2;
-    Svr_msg Response =3;
+message JWTwRrefreshUuidResponse{
+    string access_token = 1;
+    string refresh_token = 2;
+    Uuid Uuid=3;
+    Svr_msg Response =4;
 }
 
 message EntityResponse{
