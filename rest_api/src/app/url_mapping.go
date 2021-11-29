@@ -24,4 +24,6 @@ func usersUrls() {
 
 func oauthUrls() {
 	router.POST("/login", oauth_controller.LoginUser)
+	router.POST("/token", oauth_controller.ValidateRefreshToken)
+	router.POST("/token/revoke", oauth_controller.RevokeUsersTokens)
 }
