@@ -84,20 +84,15 @@ func (mc messagingController) CreateUserConversation(c *gin.Context) {
 	result_response_object := mc.msg_svs.CreateUserConversation(ctx, &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
-
 func (mc messagingController) GetConversationsByUser(c *gin.Context) {
-	bytes, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		aErr := server_message.NewInternalError()
+	uuid, ok := c.Params.Get("uuid")
+	if !ok {
+		aErr := server_message.NewBadRequestError("no uuid provided in path")
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	new_request := messaging.Uuid{}
-	if err := protojson.Unmarshal(bytes, &new_request); err != nil {
-		aErr := server_message.NewBadRequestError("invalid json")
-		c.JSON(aErr.GetStatus(), aErr)
-		return
-	}
+	new_request := messaging.Uuid{Uuid: uuid}
+
 	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
 	result_response_object := mc.msg_svs.GetConversationsByUser(ctx, &new_request)
 
