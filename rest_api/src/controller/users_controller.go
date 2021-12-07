@@ -42,17 +42,10 @@ func (uctrl usersController) CreateUser(c *gin.Context) {
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }
 func (uctrl usersController) GetUserProfileByUuid(c *gin.Context) {
-	bytes, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		aErr := server_message.NewInternalError()
-		c.JSON(aErr.GetStatus(), aErr)
-		return
-	}
+	uuids := c.QueryArray("uuid")
 	new_request := users.MultipleUuids{}
-	if err := protojson.Unmarshal(bytes, &new_request); err != nil {
-		aErr := server_message.NewBadRequestError("invalid json")
-		c.JSON(aErr.GetStatus(), aErr)
-		return
+	for _, uuid := range uuids {
+		new_request.Uuids = append(new_request.Uuids, &users.Uuid{Uuid: uuid})
 	}
 	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
 	result_response_object := uctrl.us_svs.GetUserProfileByUuid(ctx, &new_request)
