@@ -37,8 +37,9 @@ message User{
 }
 
 message UserProfile {
-    bool active= 1;
-    string phone = 2;
+    Uuid uuid= 1;
+    bool active= 2;
+    string phone = 3;
     string first_name= 4;
     string last_name= 5;
     string user_name= 6;

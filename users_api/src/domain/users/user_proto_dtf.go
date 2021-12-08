@@ -29,6 +29,7 @@ func (usp *UserProfile) Poblate_PrototoStruct(pup *pb.UserProfile) {
 }
 
 func (usp UserProfile) Poblate_StructtoProto(pup *pb.UserProfile) {
+	pup.Uuid = &pb.Uuid{Uuid: usp.Uuid}
 	pup.Active = usp.Active
 	pup.Phone = usp.Phone
 	pup.FirstName = usp.FirstName

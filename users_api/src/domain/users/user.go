@@ -11,6 +11,7 @@ type UserSlice []*User
 
 type UserProfile struct {
 	Id          int64  `json:"id,omitempty"`
+	Uuid        string `json:"uuid"`
 	UserId      int64  `json:"user_id"`
 	Active      bool   `json:"active"`
 	Phone       string `json:"phone"`

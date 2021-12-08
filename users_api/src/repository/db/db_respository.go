@@ -12,14 +12,13 @@ import (
 )
 
 const (
-	queryGetUserByUuid      = "SELECT id, uuid FROM user_table WHERE uuid=$1;"
-	queryGetUserByLogin     = "SELECT id, uuid, login_user FROM user_table WHERE login_user=$1 and login_password=$2;"
-	queryGetUserProfileById = "SELECT up.id, up.user_id, up.active, up.phone, up.first_name, up.last_name, up.username, up.avatar_url, up.description, to_char(up.created_at, 'YYYY-MM-DD HH24:MI:SS TZ') FROM user_profile up JOIN user_table ut on up.user_id = ut.id WHERE ut.uuid=$1;"
-	queryDeleteUserByUuid   = "DELETE FROM user_table WHERE uuid=$1;"
-	queryInsertUserProfile  = "INSERT INTO user_profile(user_id, phone, active, first_name, last_name, description, username, avatar_url) VALUES ($1,$2, $3, $4, $5, $6, $7, $8);"
-	queryInsertUser         = "INSERT INTO user_table(login_user, login_password) VALUES($1, $2) RETURNING id, uuid, login_user;"
-	queryUpdateUserProfile  = "UPDATE user_profile as up SET phone=$2, first_name=$3, last_name=$4, username=$5, avatar_url=$6, description=$7 from user_table as ut WHERE up.user_id=ut.id AND ut.uuid = $1 RETURNING up.active, up.phone, up.first_name, up.last_name, up.username, up.avatar_url, up.description, to_char(up.created_at, 'YYYY-MM-DD HH24:MI:SS TZ');"
-	queryUpdateActive       = "UPDATE user_profile up SET active=$2 from user_table ut WHERE up.user_id = ut.id and ut.uuid = $1;"
+	queryGetUserByUuid     = "SELECT id, uuid FROM user_table WHERE uuid=$1;"
+	queryGetUserByLogin    = "SELECT id, uuid, login_user FROM user_table WHERE login_user=$1 and login_password=$2;"
+	queryDeleteUserByUuid  = "DELETE FROM user_table WHERE uuid=$1;"
+	queryInsertUserProfile = "INSERT INTO user_profile(user_id, phone, active, first_name, last_name, description, username, avatar_url) VALUES ($1,$2, $3, $4, $5, $6, $7, $8);"
+	queryInsertUser        = "INSERT INTO user_table(login_user, login_password) VALUES($1, $2) RETURNING id, uuid, login_user;"
+	queryUpdateUserProfile = "UPDATE user_profile as up SET phone=$2, first_name=$3, last_name=$4, username=$5, avatar_url=$6, description=$7 from user_table as ut WHERE up.user_id=ut.id AND ut.uuid = $1 RETURNING up.active, up.phone, up.first_name, up.last_name, up.username, up.avatar_url, up.description, to_char(up.created_at, 'YYYY-MM-DD HH24:MI:SS TZ');"
+	queryUpdateActive      = "UPDATE user_profile up SET active=$2 from user_table ut WHERE up.user_id = ut.id and ut.uuid = $1;"
 
 //Here is where the queries are going to be
 )
@@ -88,7 +87,7 @@ func (dbr *userDbRepository) GetUserProfileById(uuids []string) ([]*users.UserPr
 	var profiles []*users.UserProfile
 	query := GoquDialect.From(
 		"user_profile").Select(
-		"user_profile.id", "user_profile.user_id", "user_profile.active", "user_profile.phone", "user_profile.first_name", "user_profile.last_name", "user_profile.username", "user_profile.avatar_url", "user_profile.description", goqu.L("to_char(user_profile.created_at, 'YYYY-MM-DD HH24:MI:SS TZ')")).Join(
+		"user_profile.id", "user_table.uuid", "user_profile.user_id", "user_profile.active", "user_profile.phone", "user_profile.first_name", "user_profile.last_name", "user_profile.username", "user_profile.avatar_url", "user_profile.description", goqu.L("to_char(user_profile.created_at, 'YYYY-MM-DD HH24:MI:SS TZ')")).Join(
 		goqu.T("user_table"), goqu.On(goqu.Ex{"user_profile.user_id": goqu.I("user_table.id")})).Where(goqu.Ex{"user_table.uuid": uuids})
 	toSQL, _, err := query.ToSQL()
 	if err != nil {
@@ -104,7 +103,7 @@ func (dbr *userDbRepository) GetUserProfileById(uuids []string) ([]*users.UserPr
 	}
 	for rows.Next() {
 		var profile users.UserProfile
-		if err := rows.Scan(&profile.Id, &profile.UserId, &profile.Active, &profile.Phone, &profile.FirstName, &profile.LastName, &profile.UserName, &profile.AvatarUrl, &profile.Description, &profile.CreatedAt); err != nil {
+		if err := rows.Scan(&profile.Id, &profile.Uuid, &profile.UserId, &profile.Active, &profile.Phone, &profile.FirstName, &profile.LastName, &profile.UserName, &profile.AvatarUrl, &profile.Description, &profile.CreatedAt); err != nil {
 			getErr := server_message.NewInternalError()
 			logger.Error(getErr.GetFormatted(), err)
 			return nil, getErr
