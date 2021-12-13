@@ -40,6 +40,7 @@ func (oauthctrl oauthController) LoginUser(c *gin.Context) {
 	}
 	result_response_object, headers := oauthctrl.oauthsvs.LoginUser(&new_request)
 	if headers != nil {
+		c.Header("access-control-expose-headers", "access-token, refresh-token")
 		c.Header("access-token", headers[0])
 		c.Header("refresh-token", headers[1])
 	}
@@ -56,6 +57,7 @@ func (oauthctrl oauthController) ValidateRefreshToken(c *gin.Context) {
 	new_request := oauth.JWT{Jwt: token}
 	result_response_object, headers := oauthctrl.oauthsvs.ValidateRefreshToken(&new_request)
 	if headers != nil {
+		c.Header("access-control-expose-headers", "access-token, refresh-token")
 		c.Header("access-token", headers[0])
 		c.Header("refresh-token", headers[1])
 	}
