@@ -9,8 +9,9 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 		Uuid := pb.Uuid{Uuid: c.Uuid}
 		cpb.Uuid = &Uuid
 		cpb.CreatedAt = c.CreatedAt
-		lastmsgUuid := pb.Uuid{Uuid: c.LastMessageUuid}
-		cpb.LastMsgUuid = &lastmsgUuid
+		lastmsg := pb.Message{}
+		c.LastMessage.Poblate(direction_out, &lastmsg)
+		cpb.LastMsg = &lastmsg
 		cpb.Type = c.Type
 		cpb.Description = c.Description
 		cpb.AvatarUrl = c.AvatarUrl
@@ -19,8 +20,8 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 		if cpb.Uuid != nil {
 			c.Uuid = cpb.Uuid.Uuid
 		}
-		if cpb.LastMsgUuid != nil {
-			c.LastMessageUuid = cpb.LastMsgUuid.Uuid
+		if cpb.LastMsg.Uuid != nil {
+			c.LastMessage.Poblate(direction_out, cpb.LastMsg)
 		}
 		c.CreatedAt = cpb.CreatedAt
 		c.Type = cpb.Type

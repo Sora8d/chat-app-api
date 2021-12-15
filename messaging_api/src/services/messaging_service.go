@@ -12,6 +12,10 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/repository/users_client"
 )
 
+var (
+	null_uuid = "00000000-0000-0000-0000-000000000000"
+)
+
 type MessagingService interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
 	CreateMessage(context.Context, string, message.Message) (*uuids.Uuid, server_message.Svr_message)
@@ -128,6 +132,27 @@ func (ms *messagingService) GetConversationsByUser(user_uuid string) (conversati
 	if err != nil {
 		return nil, err
 	}
+	last_messages := []*message.Message{}
+	messages_to_fetch := []string{}
+	for index, convo_response := range conversations {
+		ucs, aErr := ms.dbrepo.GetUserConversationsForConversation(convo_response.Conversation.Uuid, convo_response.UserConversation.Uuid)
+		if aErr != nil {
+			return nil, aErr
+		}
+		conversations[index].Participants = ucs
+		last_message := &conversations[index].LastMessage
+		if last_message.Uuid != null_uuid {
+			last_messages = append(last_messages, last_message)
+			messages_to_fetch = append(messages_to_fetch, last_message.Uuid)
+		}
+	}
+	fetched_messages, err := ms.dbrepo.GetMessageByUuid(messages_to_fetch)
+	if err != nil {
+		return nil, err
+	}
+	for index, message := range last_messages {
+		*last_messages[index] = fetched_messages[message.Uuid]
+	}
 
 	return conversations, nil
 }
@@ -175,10 +200,11 @@ func (ms *messagingService) GetMessagesByConversation(user_uuid string, convo_uu
 	return messages, nil
 }
 func (ms *messagingService) UpdateMessage(message_uuid, verification_uuid, text string) (*message.Message, server_message.Svr_message) {
-	verify_message, err := ms.dbrepo.GetMessageByUuid(message_uuid)
+	slice_messages, err := ms.dbrepo.GetMessageByUuid([]string{message_uuid})
 	if err != nil {
 		return nil, err
 	}
+	verify_message := slice_messages[message_uuid]
 
 	if ok := compareUuids(verification_uuid, verify_message.AuthorUuid); !ok {
 		return nil, server_message.NewBadRequestError("message doesnt belong to given user")

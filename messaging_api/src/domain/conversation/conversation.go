@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"github.com/Sora8d/common/server_message"
+	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/users"
 )
 
@@ -12,7 +13,7 @@ type Conversation struct {
 	Type      int32   `json:"type"`
 	CreatedAt float32 `json:"created_at"`
 	//DeletedAt
-	LastMessageUuid  string `json:"last_message_uuid"` //
+	LastMessage      message.Message `json:"last_message"`
 	ConversationInfo `json:"info,omitempty"`
 }
 

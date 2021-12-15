@@ -55,10 +55,11 @@ type MessagingDBRepository interface {
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 
-	GetMessageByUuid(string) (*message.Message, server_message.Svr_message)
+	GetMessageByUuid(message_uuids []string) (map[string]message.Message, server_message.Svr_message)
 	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
 
+	GetUserConversationsForConversation(uuid string, exclude_uuid string) ([]conversation.UserConversation, server_message.Svr_message)
 	UserConversationUpdateLastAccess(string, string) (*conversation.UserConversation, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 
@@ -96,7 +97,7 @@ func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]co
 		convo_response := conversation.ConversationAndParticipants{}
 		convo := conversation.Conversation{}
 		uc := conversation.UserConversation{}
-		if err := rows.Scan(&convo.Id, &convo.Uuid, &convo.TwilioSid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl,
+		if err := rows.Scan(&convo.Id, &convo.Uuid, &convo.TwilioSid, &convo.Type, &convo.CreatedAt, &convo.LastMessage.Uuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl,
 			&uc.Id, &uc.Uuid, &uc.TwilioSid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt,
 		); err != nil {
 			logger.Error("error in GetConversationsByUser function, scanning rows", err)
@@ -106,13 +107,7 @@ func (dbr *messagingDBRepository) GetConversationsByUser(user_uuid string) ([]co
 		convo_response.UserConversation = uc
 		array_convos_response = append(array_convos_response, convo_response)
 	}
-	for index, convo_response := range array_convos_response {
-		ucs, aErr := dbr.getUserConversationsForConversation(convo_response.Conversation.Uuid)
-		if aErr != nil {
-			return nil, aErr
-		}
-		array_convos_response[index].Participants = ucs
-	}
+
 	if len(array_convos_response) == 0 {
 		return nil, server_message.NewNotFoundError("no conversations where found in which this user partcipates")
 	}
@@ -133,7 +128,7 @@ func (dbr *messagingDBRepository) UpdateConversationLastMsg(uuid string, last_me
 	dbclient := postgresql.GetSession()
 	row := dbclient.QueryRow(queryConversationUpdateMsgUuid, uuid, last_message_uuid)
 	convo := conversation.Conversation{}
-	if err := row.Scan(&convo.Uuid, &convo.LastMessageUuid); err != nil {
+	if err := row.Scan(&convo.Uuid, &convo.LastMessage.Uuid); err != nil {
 		logger.Error("error in ConversationUpdateMsgUuid function", err)
 		return nil, server_message.NewInternalError()
 	}
@@ -151,24 +146,33 @@ func (dbr *messagingDBRepository) CreateMessage(msg message.Message) (*uuids.Uui
 	return &uuid, nil
 }
 
-func (dbr *messagingDBRepository) GetMessageByUuid(message_uuid string) (*message.Message, server_message.Svr_message) {
+func (dbr *messagingDBRepository) GetMessageByUuid(message_uuids []string) (map[string]message.Message, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
-	query := GoquDialect.From("message_table").Select("id", "uuid", "twilio_sid", "conversation_id", "conversation_uuid", "author_id", "author_uuid", "body", goqu.L("date_part('epoch',created_at)")).Where(goqu.Ex{"uuid": message_uuid})
+	query := GoquDialect.From("message_table").Select("id", "uuid", "twilio_sid", "conversation_id", "conversation_uuid", "author_id", "author_uuid", "body", goqu.L("date_part('epoch',created_at)")).Where(goqu.Ex{"uuid": message_uuids})
 	ToSQL, _, err := query.ToSQL()
 	if err != nil {
 		logger.Error("error generating goqu sql in GetMessageByUuid", err)
 		return nil, server_message.NewInternalError()
 	}
-	row := dbclient.QueryRow(ToSQL)
-	var result_message message.Message
-	if err = row.Scan(&result_message.Id, &result_message.Uuid, &result_message.TwilioSid, &result_message.ConversationId, &result_message.ConversationUuid, &result_message.AuthorId, &result_message.AuthorUuid, &result_message.Text, &result_message.CreatedAt); err != nil {
-		if err.Error() == errNoRows {
-			return nil, server_message.NewNotFoundError("message not found")
-		}
-		logger.Error("error in scan sql in GetMessageByUuid", err)
+	rows, err := dbclient.Query(ToSQL)
+	if err != nil {
+		logger.Error("error processing query in GetMessageByUuid", err)
 		return nil, server_message.NewInternalError()
 	}
-	return &result_message, nil
+
+	var results = make(map[string]message.Message)
+	for rows.Next() {
+		var result_message message.Message
+		if err = rows.Scan(&result_message.Id, &result_message.Uuid, &result_message.TwilioSid, &result_message.ConversationId, &result_message.ConversationUuid, &result_message.AuthorId, &result_message.AuthorUuid, &result_message.Text, &result_message.CreatedAt); err != nil {
+			if err.Error() == errNoRows {
+				return nil, server_message.NewNotFoundError("message not found")
+			}
+			logger.Error("error in scan sql in GetMessageByUuid", err)
+			return nil, server_message.NewInternalError()
+		}
+		results[result_message.Uuid] = result_message
+	}
+	return results, nil
 }
 
 func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string) ([]message.Message, server_message.Svr_message) {
@@ -255,7 +259,7 @@ func (dbr *messagingDBRepository) GetConversationByUuid(uuid string) (*conversat
 	dbclient := postgresql.GetSession()
 	row := dbclient.QueryRow(queryGetConversationByUuid, uuid)
 	convo := conversation.Conversation{}
-	if err := row.Scan(&convo.Id, &convo.Uuid, &convo.TwilioSid, &convo.Type, &convo.CreatedAt, &convo.LastMessageUuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl); err != nil {
+	if err := row.Scan(&convo.Id, &convo.Uuid, &convo.TwilioSid, &convo.Type, &convo.CreatedAt, &convo.LastMessage.Uuid, &convo.ConversationInfo.Name, &convo.ConversationInfo.Description, &convo.ConversationInfo.AvatarUrl); err != nil {
 		logger.Error("error in GetConversationByUuid function", err)
 		return nil, server_message.NewInternalError()
 	}
@@ -282,7 +286,7 @@ func (dbr *messagingDBRepository) FetchUserConversationByUserUuidConversationUui
 	return &result_uuid, nil
 }
 
-func (dbr *messagingDBRepository) getUserConversationsForConversation(uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
+func (dbr *messagingDBRepository) GetUserConversationsForConversation(uuid, exclude_uuid string) ([]conversation.UserConversation, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	rows, err := dbclient.Query(queryGetUserConversationForConversation, uuid)
 	if err != nil {
@@ -295,6 +299,9 @@ func (dbr *messagingDBRepository) getUserConversationsForConversation(uuid strin
 		if err := rows.Scan(&uc.Id, &uc.Uuid, &uc.TwilioSid, &uc.UserId, &uc.UserUuid, &uc.ConversationId, &uc.ConversationUuid, &uc.LastAccessUuid, &uc.CreatedAt); err != nil {
 			logger.Error("error in GetUserConversationForConversation function, scanning rows", err)
 			return nil, server_message.NewInternalError()
+		}
+		if uc.Uuid == exclude_uuid {
+			continue
 		}
 		ucs = append(ucs, uc)
 	}

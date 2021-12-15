@@ -28,7 +28,7 @@ package flydevs_chat_app_messaging;
      Uuid uuid =1;
      int32 type =2;
      float created_at= 3;
-     Uuid last_msg_uuid= 4;
+     Message last_msg= 4;
      string name =5;
     string description =6;
     string avatar_url=7;
