@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/Sora8d/common/logger"
 	"github.com/Sora8d/common/server_message"
 	"github.com/doug-martin/goqu/v9"
@@ -56,7 +58,7 @@ type MessagingDBRepository interface {
 	UpdateConversationLastMsg(string, string) (*conversation.Conversation, server_message.Svr_message)
 
 	GetMessageByUuid(message_uuids []string) (map[string]message.Message, server_message.Svr_message)
-	GetMessagesByConversation(string) ([]message.Message, server_message.Svr_message)
+	GetMessagesByConversation(string, *int64, *int64) ([]message.Message, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
 
 	GetUserConversationsForConversation(uuid string, exclude_uuid string) ([]conversation.UserConversation, server_message.Svr_message)
@@ -175,11 +177,53 @@ func (dbr *messagingDBRepository) GetMessageByUuid(message_uuids []string) (map[
 	return results, nil
 }
 
+func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string, before_unix, after_unix *int64) ([]message.Message, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	queryvals := GoquDialect.From("message_table").Select("message_table.id", "message_table.uuid", "message_table.twilio_sid", "message_table.conversation_id", "message_table.conversation_uuid", "message_table.author_id", "message_table.author_uuid", "message_table.body", goqu.L("date_part('epoch',message_table.created_at)"), goqu.L("date_part('epoch',message_table.updated_at)")).Join(goqu.T("conversation"), goqu.On(goqu.Ex{"message_table.conversation_id": goqu.I("conversation.id")})).Limit(5).Order(goqu.I("message_table.created_at").Desc())
+	filters := goqu.Ex{"conversation.uuid": uuid}
+	switch {
+	case before_unix != nil:
+		filters["message_table.created_at"] = goqu.Op{"lt": goqu.L(fmt.Sprintf("to_timestamp(%d)", *before_unix))}
+	case after_unix != nil:
+		filters["message_table.created_at"] = goqu.Op{"gt": goqu.L(fmt.Sprintf("to_timestamp(%d)", *after_unix))}
+	}
+	queryvals = queryvals.Where(filters)
+	query, _, err := queryvals.ToSQL()
+	if err != nil {
+		logger.Error("error in GetMEssageByConversation, generating goqu query", err)
+		return nil, server_message.NewInternalError()
+	}
+	rows, err := dbclient.Query(query)
+	if err != nil {
+		logger.Error("error in getmessagebyconversation function, getting rows", err)
+		return nil, server_message.NewInternalError()
+	}
+	msgs := []message.Message{}
+	for rows.Next() {
+		msg := message.Message{}
+		if err := rows.Scan(&msg.Id, &msg.Uuid, &msg.TwilioSid, &msg.ConversationId, &msg.ConversationUuid, &msg.AuthorId, &msg.AuthorUuid, &msg.Text, &msg.CreatedAt, &msg.UpdatedAt); err != nil {
+			logger.Error("error in getmessagebyconversationid function, scanning rows", err)
+			return nil, server_message.NewInternalError()
+		}
+		msgs = append(msgs, msg)
+	}
+	if len(msgs) == 0 {
+		return nil, server_message.NewNotFoundError("no messages where found")
+	}
+	for i := len(msgs)/2 - 1; i >= 0; i-- {
+		opp := len(msgs) - 1 - i
+		msgs[i], msgs[opp] = msgs[opp], msgs[i]
+	}
+	return msgs, nil
+}
+
+/*
 func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string) ([]message.Message, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
+
 	rows, err := dbclient.Query(queryGetMessagesByConversationUuid, uuid)
 	if err != nil {
-		logger.Error("error in getmessagebyconversationid function, getting rows", err)
+		logger.Error("error in getmessagebyconversation function, getting rows", err)
 		return nil, server_message.NewInternalError()
 	}
 	msgs := []message.Message{}
@@ -196,7 +240,7 @@ func (dbr *messagingDBRepository) GetMessagesByConversation(uuid string) ([]mess
 	}
 	return msgs, nil
 }
-
+*/
 func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*message.Message, server_message.Svr_message) {
 	dbclient := postgresql.GetSession()
 	row := dbclient.QueryRow(queryUpdateMessage, uuid, text)

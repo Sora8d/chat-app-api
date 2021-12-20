@@ -25,7 +25,7 @@ type MessagingService interface {
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
-	GetMessagesByConversation(string, string) (message.MessageSlice, server_message.Svr_message)
+	GetMessagesByConversation(string, string, int64, int64) (message.MessageSlice, server_message.Svr_message)
 	UpdateMessage(string, string, string) (*message.Message, server_message.Svr_message)
 }
 type messagingService struct {
@@ -180,8 +180,16 @@ func (ms *messagingService) UpdateConversationInfo(convo_uuid string, verificati
 
 //
 
-func (ms *messagingService) GetMessagesByConversation(user_uuid string, convo_uuid string) (message.MessageSlice, server_message.Svr_message) {
-	messages, err := ms.dbrepo.GetMessagesByConversation(convo_uuid)
+func (ms *messagingService) GetMessagesByConversation(user_uuid string, convo_uuid string, before_date, after_date int64) (message.MessageSlice, server_message.Svr_message) {
+	var before_or_nill *int64
+	var after_or_nill *int64
+	if before_date != 0 {
+		before_or_nill = &before_date
+	}
+	if after_date != 0 {
+		after_or_nill = &after_date
+	}
+	messages, err := ms.dbrepo.GetMessagesByConversation(convo_uuid, before_or_nill, after_or_nill)
 	if err != nil {
 		return nil, err
 	}

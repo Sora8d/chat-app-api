@@ -2,10 +2,12 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/Sora8d/common/server_message"
 	"github.com/flydevs/chat-app-api/rest-api/src/clients/rpc/messaging"
+	"github.com/flydevs/chat-app-api/rest-api/src/domain"
 	"github.com/flydevs/chat-app-api/rest-api/src/services"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -106,7 +108,27 @@ func (mc messagingController) GetMessagesByConversation(c *gin.Context) {
 		c.JSON(aErr.GetStatus(), aErr)
 		return
 	}
-	new_request := messaging.Uuid{Uuid: uuid}
+	var parsing_error error
+	before_date_string, b_ok := c.GetQuery("before")
+	var before_date int64
+	if b_ok {
+		if _, err := fmt.Sscan(before_date_string, &before_date); err != nil {
+			parsing_error = err
+		}
+	}
+	after_date_string, a_ok := c.GetQuery("after")
+	var after_date int64
+	if a_ok {
+		if _, err := fmt.Sscan(after_date_string, &after_date); err != nil {
+			parsing_error = err
+		}
+	}
+	if parsing_error != nil || (a_ok && b_ok) {
+		response := domain.Response{}.CreateResponse(nil, server_message.NewBadRequestError("bad before/after parameters"))
+		c.JSON(response.Response.GetStatus(), response)
+		return
+	}
+	new_request := messaging.GetMessages{Uuid: &messaging.Uuid{Uuid: uuid}, BeforeDate: before_date, AfterDate: after_date}
 
 	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
 	result_response_object := mc.msg_svs.GetMessagesByConversation(ctx, &new_request)

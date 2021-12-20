@@ -71,8 +71,8 @@ func (ms messagingServer) GetConversationsByUser(ctx context.Context, pbuuid *pr
 	return &Proto_response, nil
 }
 
-func (ms messagingServer) GetMessagesByConversation(ctx context.Context, pbuuid *proto_messaging.Uuid) (*proto_messaging.ArrayMessageResponse, error) {
-	messages, err := ms.controller.GetMessagesByConversation(ctx, pbuuid)
+func (ms messagingServer) GetMessagesByConversation(ctx context.Context, getMessagesRequest *proto_messaging.GetMessages) (*proto_messaging.ArrayMessageResponse, error) {
+	messages, err := ms.controller.GetMessagesByConversation(ctx, getMessagesRequest)
 	var Proto_response proto_messaging.ArrayMessageResponse
 	var msg *proto_messaging.SvrMsg
 	if err != nil {

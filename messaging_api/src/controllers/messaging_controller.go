@@ -27,7 +27,7 @@ type MessagingController interface {
 	CreateMessage(context.Context, *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message)
 	CreateUserConversation(context.Context, *proto_messaging.CreateUserConversationRequest) server_message.Svr_message
 	GetConversationsByUser(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.ConversationAndParticipants, server_message.Svr_message)
-	GetMessagesByConversation(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.Message, server_message.Svr_message)
+	GetMessagesByConversation(context.Context, *proto_messaging.GetMessages) ([]*proto_messaging.Message, server_message.Svr_message)
 	UpdateConversationInfo(context.Context, *proto_messaging.Conversation) (*proto_messaging.Conversation, server_message.Svr_message)
 	UpdateMessage(context.Context, *proto_messaging.Message) (*proto_messaging.Message, server_message.Svr_message)
 }
@@ -153,7 +153,7 @@ func (mc messagingController) GetConversationsByUser(ctx context.Context, proto_
 }
 
 //
-func (mc messagingController) GetMessagesByConversation(ctx context.Context, convo_uuid *proto_messaging.Uuid) ([]*proto_messaging.Message, server_message.Svr_message) {
+func (mc messagingController) GetMessagesByConversation(ctx context.Context, convo_uuid *proto_messaging.GetMessages) ([]*proto_messaging.Message, server_message.Svr_message) {
 	md, aErr := validateContext(ctx)
 	if aErr != nil {
 		return nil, aErr
@@ -163,7 +163,7 @@ func (mc messagingController) GetMessagesByConversation(ctx context.Context, con
 		return nil, aErr
 	}
 
-	messages, err := mc.svc.GetMessagesByConversation(*verification_uuid, convo_uuid.Uuid)
+	messages, err := mc.svc.GetMessagesByConversation(*verification_uuid, convo_uuid.Uuid.Uuid, convo_uuid.BeforeDate, convo_uuid.AfterDate)
 	if err != nil {
 		return nil, err
 	}

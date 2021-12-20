@@ -17,7 +17,7 @@ type MessagingRepositoryInterface interface {
 	CreateConversation(context.Context, *messaging.Conversation) (*messaging.Uuid, server_message.Svr_message)
 	CreateUserConversation(context.Context, *messaging.CreateUserConversationRequest) server_message.Svr_message
 	GetConversationsByUser(context.Context, *messaging.Uuid) ([]*messaging.ConversationAndParticipants, server_message.Svr_message)
-	GetMessagesByConversation(context.Context, *messaging.Uuid) ([]*messaging.Message, server_message.Svr_message)
+	GetMessagesByConversation(context.Context, *messaging.GetMessages) ([]*messaging.Message, server_message.Svr_message)
 	UpdateMessage(context.Context, *messaging.Message) (*messaging.Message, server_message.Svr_message)
 	UpdateConversationInfo(context.Context, *messaging.Conversation) (*messaging.Conversation, server_message.Svr_message)
 }
@@ -66,7 +66,7 @@ func (mr messagingRepository) GetConversationsByUser(ctx context.Context, in *me
 	return response.Conversations, server_message.NewCustomMessage(int(response.Msg.Status), response.Msg.Message)
 }
 
-func (mr messagingRepository) GetMessagesByConversation(ctx context.Context, in *messaging.Uuid) ([]*messaging.Message, server_message.Svr_message) {
+func (mr messagingRepository) GetMessagesByConversation(ctx context.Context, in *messaging.GetMessages) ([]*messaging.Message, server_message.Svr_message) {
 	client := proto_clients.GetMessagingClient()
 	response, err := client.Client.GetMessagesByConversation(ctx, in)
 	if err != nil {

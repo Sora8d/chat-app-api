@@ -16,7 +16,7 @@ package flydevs_chat_app_messaging;
 
         rpc CreateMessage(CreateMessageRequest) returns (UuidMsg) {}
         //Later change userUuid to use JWT info.
-        rpc GetMessagesByConversation(Uuid) returns (ArrayMessageResponse) {}
+        rpc GetMessagesByConversation(GetMessages) returns (ArrayMessageResponse) {}
         rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
         
         rpc CreateUserConversation(CreateUserConversationRequest) returns (SvrMsg) {}
@@ -87,6 +87,12 @@ message MessageMsgResponse{
 message ArrayMessageResponse{
     repeated Message message = 1;
     SvrMsg msg=2;
+}
+
+message GetMessages{
+    Uuid uuid=1;
+    int64 before_date=2;
+    int64 after_date=3;
 }
 //----
 //other

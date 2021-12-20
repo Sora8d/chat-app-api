@@ -20,7 +20,7 @@ func (c *Conversation) Poblate(direction_out bool, cpb *pb.Conversation) {
 		if cpb.Uuid != nil {
 			c.Uuid = cpb.Uuid.Uuid
 		}
-		if cpb.LastMsg.Uuid != nil {
+		if cpb.LastMsg != nil && cpb.LastMsg.Uuid != nil {
 			c.LastMessage.Poblate(direction_out, cpb.LastMsg)
 		}
 		c.CreatedAt = cpb.CreatedAt
