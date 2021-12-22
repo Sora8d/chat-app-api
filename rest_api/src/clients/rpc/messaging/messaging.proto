@@ -27,7 +27,7 @@ package flydevs_chat_app_messaging;
  message Conversation{
      Uuid uuid =1;
      int32 type =2;
-     float created_at= 3;
+     double created_at= 3;
      Message last_msg= 4;
      string name =5;
     string description =6;
@@ -38,7 +38,7 @@ message UserConversation{
     Uuid uuid =1;
     Uuid user_uuid =2;
     Uuid last_access_uuid = 4;
-    float created_at =5;
+    double created_at =5;
 }
 
 message ConversationAndParticipants{
@@ -70,8 +70,8 @@ message Message{
     Uuid conversation_uuid =2;
     Uuid author_uuid=3;
     string text=4;
-    float created_at=5;
-    float updated_at=6;
+    double created_at=5;
+    double updated_at=6;
 }
 
 message CreateMessageRequest{
@@ -91,8 +91,8 @@ message ArrayMessageResponse{
 }
 message GetMessages{
     Uuid uuid=1;
-    int64 before_date=2;
-    int64 after_date=3;
+    double before_date=2;
+    double after_date=3;
 }
 //----
 //other

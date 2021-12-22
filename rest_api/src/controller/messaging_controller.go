@@ -110,14 +110,14 @@ func (mc messagingController) GetMessagesByConversation(c *gin.Context) {
 	}
 	var parsing_error error
 	before_date_string, b_ok := c.GetQuery("before")
-	var before_date int64
+	var before_date float64
 	if b_ok {
 		if _, err := fmt.Sscan(before_date_string, &before_date); err != nil {
 			parsing_error = err
 		}
 	}
 	after_date_string, a_ok := c.GetQuery("after")
-	var after_date int64
+	var after_date float64
 	if a_ok {
 		if _, err := fmt.Sscan(after_date_string, &after_date); err != nil {
 			parsing_error = err

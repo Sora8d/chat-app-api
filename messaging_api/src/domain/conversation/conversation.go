@@ -11,7 +11,7 @@ type Conversation struct {
 	Uuid      string  `json:"uuid"`
 	TwilioSid string  `json:"twilio_sid"`
 	Type      int32   `json:"type"`
-	CreatedAt float32 `json:"created_at"`
+	CreatedAt float64 `json:"created_at"`
 	//DeletedAt
 	LastMessage      message.Message `json:"last_message"`
 	ConversationInfo `json:"info,omitempty"`
@@ -37,7 +37,7 @@ type UserConversation struct {
 	ConversationId   int64   `json:"conversation_id"`
 	ConversationUuid string  `json:"conversation_uuid"`
 	LastAccessUuid   string  `json:"last_access_uuid"` //Cambio a timestamp
-	CreatedAt        float32 `json:"created_at"`
+	CreatedAt        float64 `json:"created_at"`
 }
 
 func (uc *UserConversation) SetTwilioSid(twilio_sid string) {

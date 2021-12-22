@@ -25,7 +25,7 @@ type MessagingService interface {
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
 
-	GetMessagesByConversation(string, string, int64, int64) (message.MessageSlice, server_message.Svr_message)
+	GetMessagesByConversation(string, string, float64, float64) (message.MessageSlice, server_message.Svr_message)
 	UpdateMessage(string, string, string) (*message.Message, server_message.Svr_message)
 }
 type messagingService struct {
@@ -180,9 +180,9 @@ func (ms *messagingService) UpdateConversationInfo(convo_uuid string, verificati
 
 //
 
-func (ms *messagingService) GetMessagesByConversation(user_uuid string, convo_uuid string, before_date, after_date int64) (message.MessageSlice, server_message.Svr_message) {
-	var before_or_nill *int64
-	var after_or_nill *int64
+func (ms *messagingService) GetMessagesByConversation(user_uuid string, convo_uuid string, before_date, after_date float64) (message.MessageSlice, server_message.Svr_message) {
+	var before_or_nill *float64
+	var after_or_nill *float64
 	if before_date != 0 {
 		before_or_nill = &before_date
 	}

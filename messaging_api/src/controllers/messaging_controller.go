@@ -162,7 +162,6 @@ func (mc messagingController) GetMessagesByConversation(ctx context.Context, con
 	if aErr != nil {
 		return nil, aErr
 	}
-
 	messages, err := mc.svc.GetMessagesByConversation(*verification_uuid, convo_uuid.Uuid.Uuid, convo_uuid.BeforeDate, convo_uuid.AfterDate)
 	if err != nil {
 		return nil, err
