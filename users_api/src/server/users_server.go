@@ -102,6 +102,20 @@ func (us userServer) DeleteUserByUuid(ctx context.Context, uuid *pb.Uuid) (*pb.S
 	return &msg_to_return, nil
 }
 
+func (us userServer) SearchContact(ctx context.Context, queries *pb.SearchContactRequest) (*pb.UserProfileMsgResponse, error) {
+	result, err := us.ctrl.SearchContact(ctx, queries)
+	var response pb.UserProfileMsgResponse
+	var msg_to_return pb.SvrMsg
+	if err != nil {
+		poblateMessage(err, &msg_to_return)
+	} else {
+		poblateMessage(server_message.NewCustomMessage(http.StatusOK, "user retrieved"), &msg_to_return)
+	}
+	response.Msg = &msg_to_return
+	response.User = result
+	return &response, nil
+}
+
 func GetNewUserServer(users_controller controllers.UserControllerInterface) userServer {
 	return userServer{ctrl: users_controller}
 }

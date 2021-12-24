@@ -14,6 +14,8 @@ type UsersServiceInterface interface {
 	DeleteUser(string) server_message.Svr_message
 	UpdateUserProfile(users.UuidandProfile, bool) (*users.UserProfile, server_message.Svr_message)
 	UpdateUserProfileActive(string, bool) server_message.Svr_message
+
+	SearchContact(string) (users.UserProfileSlice, server_message.Svr_message)
 }
 
 type userService struct {
@@ -116,4 +118,12 @@ func (us userService) DeleteUser(uuid string) server_message.Svr_message {
 		return aErr
 	}
 	return nil
+}
+
+func (us userService) SearchContact(query string) (users.UserProfileSlice, server_message.Svr_message) {
+	profile, aErr := us.dbRepo.SearchContact(query)
+	if aErr != nil {
+		return nil, aErr
+	}
+	return profile, nil
 }

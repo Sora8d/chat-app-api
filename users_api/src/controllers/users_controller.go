@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Sora8d/common/logger"
 	"github.com/Sora8d/common/server_message"
@@ -28,6 +29,8 @@ type UserControllerInterface interface {
 	UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequest) (*pb.UserProfile, server_message.Svr_message)
 	UpdateActive(ctx context.Context, req *pb.UpdateActiveRequest) server_message.Svr_message
 	DeleteUserByUuid(ctx context.Context, uuid *pb.Uuid) server_message.Svr_message
+
+	SearchContact(context.Context, *pb.SearchContactRequest) ([]*pb.UserProfile, server_message.Svr_message)
 }
 
 func (us userController) UserLogin(ctx context.Context, u *pb.User) (*pb.User, server_message.Svr_message) {
@@ -47,7 +50,6 @@ func (us userController) UserLogin(ctx context.Context, u *pb.User) (*pb.User, s
 }
 
 func (us userController) GetUserByUuid(ctx context.Context, uuid *pb.MultipleUuids) ([]*pb.User, server_message.Svr_message) {
-	//This is just part of the oauth mock
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok && md.Get("user_uuid") != nil && md.Get("admin") != nil {
 		logger.Info(fmt.Sprintf("user: %s, permissions: %v", md.Get("user_uuid")[0], md.Get("admin")[0]))
@@ -108,6 +110,23 @@ func (us userController) UpdateUser(ctx context.Context, mdur *pb.UpdateUserRequ
 	var proto_user_profile pb.UserProfile
 	resp_profile.Poblate_StructtoProto(&proto_user_profile)
 	return &proto_user_profile, nil
+}
+
+func (us userController) SearchContact(ctx context.Context, queries *pb.SearchContactRequest) ([]*pb.UserProfile, server_message.Svr_message) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok && md.Get("user_uuid") != nil && md.Get("admin") != nil {
+		logger.Info(fmt.Sprintf("user: %s, permissions: %v", md.Get("user_uuid")[0], md.Get("admin")[0]))
+	}
+	if strings.TrimSpace(queries.Query) == "" {
+		return nil, server_message.NewBadRequestError("queries cant be blank")
+	}
+	profiles, err := us.svc.SearchContact(queries.Query)
+	if err != nil {
+		return nil, err
+	}
+
+	users_to_return := profiles.Poblate(true, nil)
+	return users_to_return, nil
 }
 
 func (us userController) UpdateActive(ctx context.Context, req *pb.UpdateActiveRequest) server_message.Svr_message {

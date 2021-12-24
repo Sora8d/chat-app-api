@@ -45,6 +45,7 @@ type UserDbRepository interface {
 	UpdateUserProfile(string, users.UserProfile) (*users.UserProfile, server_message.Svr_message)
 	UpdateUserProfileActive(string, bool) server_message.Svr_message
 	LoginUser(users.User) (*users.User, server_message.Svr_message)
+	SearchContact(string) ([]*users.UserProfile, server_message.Svr_message)
 }
 
 func GetUserDbRepository() UserDbRepository {
@@ -199,4 +200,36 @@ func (dbr *userDbRepository) UpdateUserProfileActive(uuid string, active bool) s
 		return actErr
 	}
 	return nil
+}
+
+func (dvr *userDbRepository) SearchContact(searchquery string) ([]*users.UserProfile, server_message.Svr_message) {
+	client := postgresql.GetSession()
+	like_param := "%" + searchquery + "%"
+	query := GoquDialect.From("user_profile").Select("user_table.uuid", "user_profile.user_id", "user_profile.active", "user_profile.phone", "user_profile.first_name", "user_profile.last_name", "user_profile.username", "user_profile.avatar_url", "user_profile.description", goqu.L("to_char(user_profile.created_at, 'YYYY-MM-DD HH24:MI:SS TZ')")).Join(
+		goqu.T("user_table"), goqu.On(goqu.Ex{"user_profile.user_id": goqu.I("user_table.id")})).Where(goqu.Or(goqu.L("CONCAT_WS(' ', user_profile.first_name, user_profile.last_name)").Like(like_param), goqu.I("user_profile.phone").Like(like_param)))
+	ToSQL, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error in searchcontact creating the goqu", err)
+		return nil, server_message.NewInternalError()
+	}
+	rows, err := client.Query(ToSQL)
+	if err != nil {
+		logger.Error("error in searchcontact executing the query", err)
+		return nil, server_message.NewInternalError()
+	}
+	var profiles []*users.UserProfile
+
+	for rows.Next() {
+		var profile users.UserProfile
+		if err := rows.Scan(&profile.Uuid, &profile.UserId, &profile.Active, &profile.Phone, &profile.FirstName, &profile.LastName, &profile.UserName, &profile.AvatarUrl, &profile.Description, &profile.CreatedAt); err != nil {
+			getErr := server_message.NewInternalError()
+			logger.Error(getErr.GetFormatted(), err)
+			return nil, getErr
+		}
+		profiles = append(profiles, &profile)
+	}
+	if len(profiles) == 0 {
+		return nil, server_message.NewNotFoundError("no users were found")
+	}
+	return profiles, nil
 }

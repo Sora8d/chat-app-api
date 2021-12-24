@@ -19,6 +19,7 @@ type UsersControllerInterface interface {
 	CreateUser(*gin.Context)
 	GetUserProfileByUuid(*gin.Context)
 	UpdateUser(*gin.Context)
+	SearchContact(*gin.Context)
 }
 
 func NewUsersController(svs services.UsersServiceInterface) UsersControllerInterface {
@@ -66,5 +67,14 @@ func (uctrl usersController) UpdateUser(c *gin.Context) {
 	}
 	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
 	result_response_object := uctrl.us_svs.UpdateUser(ctx, &new_request)
+	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
+}
+
+func (uctrl usersController) SearchContact(c *gin.Context) {
+	query := c.Query("query")
+	new_request := users.SearchContactRequest{}
+	new_request.Query = query
+	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
+	result_response_object := uctrl.us_svs.SearchContact(ctx, &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
 }

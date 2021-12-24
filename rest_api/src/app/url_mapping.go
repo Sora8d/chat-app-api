@@ -20,6 +20,7 @@ func usersUrls() {
 	router.POST("/user", users_controller.CreateUser)
 	router.GET("/user", users_controller.GetUserProfileByUuid)
 	router.PUT("/user", users_controller.UpdateUser)
+	router.GET("/search", users_controller.SearchContact)
 }
 
 func oauthUrls() {
