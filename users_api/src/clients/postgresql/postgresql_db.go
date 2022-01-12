@@ -7,6 +7,8 @@ import (
 
 	"github.com/Sora8d/common/logger"
 
+	pool "github.com/jackc/pgx/v4/pgxpool"
+
 	pgx "github.com/jackc/pgx/v4"
 )
 
@@ -19,7 +21,7 @@ type DbClient interface {
 }
 
 type dbclient struct {
-	conn *pgx.Conn
+	conn *pool.Pool
 }
 
 var (
@@ -29,7 +31,7 @@ var (
 func DbInit() {
 	datasource := config.Config["DATABASE"]
 	var err error
-	current_client.conn, err = pgx.Connect(context.Background(), datasource)
+	current_client.conn, err = pool.Connect(context.Background(), datasource)
 	if err != nil {
 		logger.Error("Error connecting to the database, shutting down the app", err)
 		panic(err)
