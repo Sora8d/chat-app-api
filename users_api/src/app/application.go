@@ -21,6 +21,7 @@ var (
 		"/flydev_chat_app_users.UsersProtoInterface/GetUserByUuid":    2,
 		"/flydev_chat_app_users.UsersProtoInterface/UpdateUser":       0,
 		"/flydev_chat_app_users.UsersProtoInterface/DeleteUserByUuid": 0,
+		"/flydev_chat_app_users.UsersProtoInterface/SearchContact":    0,
 	}
 )
 

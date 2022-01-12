@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Sora8d/common/logger"
@@ -45,7 +46,7 @@ type UserDbRepository interface {
 	UpdateUserProfile(string, users.UserProfile) (*users.UserProfile, server_message.Svr_message)
 	UpdateUserProfileActive(string, bool) server_message.Svr_message
 	LoginUser(users.User) (*users.User, server_message.Svr_message)
-	SearchContact(string) ([]*users.UserProfile, server_message.Svr_message)
+	SearchContact(string, string) ([]*users.UserProfile, server_message.Svr_message)
 }
 
 func GetUserDbRepository() UserDbRepository {
@@ -202,11 +203,11 @@ func (dbr *userDbRepository) UpdateUserProfileActive(uuid string, active bool) s
 	return nil
 }
 
-func (dvr *userDbRepository) SearchContact(searchquery string) ([]*users.UserProfile, server_message.Svr_message) {
+func (dvr *userDbRepository) SearchContact(searchquery, user_uuid string) ([]*users.UserProfile, server_message.Svr_message) {
 	client := postgresql.GetSession()
 	like_param := "%" + searchquery + "%"
 	query := GoquDialect.From("user_profile").Select("user_table.uuid", "user_profile.user_id", "user_profile.active", "user_profile.phone", "user_profile.first_name", "user_profile.last_name", "user_profile.username", "user_profile.avatar_url", "user_profile.description", goqu.L("to_char(user_profile.created_at, 'YYYY-MM-DD HH24:MI:SS TZ')")).Join(
-		goqu.T("user_table"), goqu.On(goqu.Ex{"user_profile.user_id": goqu.I("user_table.id")})).Where(goqu.Or(goqu.L("CONCAT_WS(' ', user_profile.first_name, user_profile.last_name)").Like(like_param), goqu.I("user_profile.phone").Like(like_param)))
+		goqu.T("user_table"), goqu.On(goqu.Ex{"user_profile.user_id": goqu.I("user_table.id")})).Where(goqu.Ex{"user_table.uuid": goqu.Op{"neq": user_uuid}}, goqu.Or(goqu.L(`LOWER(CONCAT_WS(' ', "user_profile"."first_name", "user_profile"."last_name"))`).Like(goqu.L(fmt.Sprintf("LOWER('%s')", like_param))), goqu.I("user_profile.phone").Like(like_param)))
 	ToSQL, _, err := query.ToSQL()
 	if err != nil {
 		logger.Error("error in searchcontact creating the goqu", err)
