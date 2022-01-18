@@ -45,6 +45,7 @@ message ConversationAndParticipants{
     Conversation conversation =1;
     UserConversation user_conversation =2;
     repeated UserConversation participants =3;
+    int32 unread_messages = 4;
 }
 
 message UpdateConversationResponse{

@@ -41,6 +41,9 @@ const (
 const (
 	errNoRows = "no rows in result set"
 )
+const (
+	null_uuid = "00000000-0000-0000-0000-000000000000"
+)
 
 var GoquDialect goqu.DialectWrapper
 
@@ -60,6 +63,7 @@ type MessagingDBRepository interface {
 	GetMessageByUuid(message_uuids []string) (map[string]message.Message, server_message.Svr_message)
 	GetMessagesByConversation(string, *float64, *float64) ([]message.Message, server_message.Svr_message)
 	UpdateMessage(string, string) (*message.Message, server_message.Svr_message)
+	CountMessages(last_read_message_uuid, last_message_uuid, conversation_uuid string) (*int32, server_message.Svr_message)
 
 	GetUserConversationsForConversation(uuid string, exclude_uuid string) ([]conversation.UserConversation, server_message.Svr_message)
 	UserConversationUpdateLastAccess(string, string) (*conversation.UserConversation, server_message.Svr_message)
@@ -329,4 +333,43 @@ func (dbr *messagingDBRepository) GetUserConversationsForConversation(uuid, excl
 		return nil, server_message.NewNotFoundError("no user_conversations where found")
 	}
 	return ucs, nil
+}
+
+func (dbr *messagingDBRepository) CountMessages(last_read_message_uuid, last_message_uuid, conversation_uuid string) (*int32, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	query := GoquDialect.From("message_table").Where(goqu.Ex{"conversation_uuid": conversation_uuid})
+
+	generateSubQuery := func(uuid string) (string, error) {
+		subquery := GoquDialect.From("message_table").Select("created_at").Where(goqu.Ex{"uuid": uuid})
+		querystring, _, err := subquery.ToSQL()
+		return querystring, err
+	}
+
+	if last_read_message_uuid != "" && last_read_message_uuid != null_uuid {
+		last_read_message_substring, err := generateSubQuery(last_read_message_uuid)
+		if err != nil {
+			logger.Error("error in CountMessages generating substring last_read_message", err)
+			return nil, server_message.NewInternalError()
+		}
+		last_message_substring, err := generateSubQuery(last_message_uuid)
+		if err != nil {
+			logger.Error("error in CountMessages generating substring last_message", err)
+			return nil, server_message.NewInternalError()
+		}
+		query = query.Select(goqu.L(`(Count("id")-1)`)).Where(goqu.L(fmt.Sprintf("created_at BETWEEN (%s) and (%s)", last_read_message_substring, last_message_substring)))
+	} else {
+		query = query.Select(goqu.L(`(Count("id"))`))
+	}
+	ToSQL, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error in CountMessages generating string", err)
+		return nil, server_message.NewInternalError()
+	}
+	row := dbclient.QueryRow(ToSQL)
+	var unread_messages int32
+	if err := row.Scan(&unread_messages); err != nil {
+		logger.Error("error in CountMessages scanning row", err)
+		return nil, server_message.NewInternalError()
+	}
+	return &unread_messages, nil
 }

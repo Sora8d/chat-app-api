@@ -83,7 +83,8 @@ func (ucs *UserConversationSlice) ParseIds(user_slice []*users.User) server_mess
 type ConversationAndParticipants struct {
 	Conversation `json:"conversation"`
 	UserConversation
-	Participants UserConversationSlice `json:"participants"`
+	Participants   UserConversationSlice `json:"participants"`
+	UnreadMessages int32                 `json:"unread_messages"`
 }
 
 type ConversationAndParticipantsSlice []ConversationAndParticipants

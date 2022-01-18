@@ -65,7 +65,7 @@ func (ms *messagingService) CreateMessage(ctx context.Context, verification_uuid
 	}
 	msg.SetConversationId(convo.Id)
 
-	_, err = ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(verification_uuid, msg.ConversationUuid)
+	uc_uuid, err := ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(verification_uuid, msg.ConversationUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,11 @@ func (ms *messagingService) CreateMessage(ctx context.Context, verification_uuid
 	if err != nil {
 		return nil, err
 	}
-
+	//Update last read message.
+	_, err = ms.dbrepo.UserConversationUpdateLastAccess(*uc_uuid, uuid.Uuid)
+	if err != nil {
+		return nil, err
+	}
 	conversationUuid := uuids.Uuid{Uuid: msg.ConversationUuid}
 	return &conversationUuid, nil
 }
@@ -145,6 +149,12 @@ func (ms *messagingService) GetConversationsByUser(user_uuid string) (conversati
 			last_messages = append(last_messages, last_message)
 			messages_to_fetch = append(messages_to_fetch, last_message.Uuid)
 		}
+
+		unread_messages, aErr := ms.dbrepo.CountMessages(convo_response.UserConversation.LastAccessUuid, convo_response.LastMessage.Uuid, convo_response.Conversation.Uuid)
+		if aErr != nil {
+			return nil, aErr
+		}
+		conversations[index].UnreadMessages = *unread_messages
 	}
 	fetched_messages, err := ms.dbrepo.GetMessageByUuid(messages_to_fetch)
 	if err != nil {
@@ -153,7 +163,6 @@ func (ms *messagingService) GetConversationsByUser(user_uuid string) (conversati
 	for index, message := range last_messages {
 		*last_messages[index] = fetched_messages[message.Uuid]
 	}
-
 	return conversations, nil
 }
 

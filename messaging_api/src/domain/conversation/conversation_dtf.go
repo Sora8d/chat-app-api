@@ -91,6 +91,7 @@ func (cr *ConversationAndParticipants) Poblate(direction_out bool, pbacr *pb.Con
 		pbacr.Conversation = &pb_convo
 		pbacr.UserConversation = &pb_user_conversation
 		pbacr.Participants = cr.Participants.Poblate(true, nil)
+		pbacr.UnreadMessages = cr.UnreadMessages
 		return
 	} else {
 		cr.Conversation.Poblate(direction_out, pbacr.Conversation)
