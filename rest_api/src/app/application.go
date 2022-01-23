@@ -20,7 +20,7 @@ func StartApplication() {
 	new_config := cors.DefaultConfig()
 	new_config.AllowOrigins = append(new_config.AllowOrigins, "*")
 	new_config.AllowMethods = append(new_config.AllowMethods, "OPTION")
-	new_config.AllowHeaders = append(new_config.AllowHeaders, "access-token")
+	new_config.AllowHeaders = append(new_config.AllowHeaders, "access-token", "refresh-token")
 	router.Use(cors.New(new_config))
 	messaging_controller = controller.NewMessagingController(services.NewMessagingService(repository.GetMessagingRepository()))
 	users_controller = controller.NewUsersController(services.NewUsersService(repository.GetUsersRepository()))
