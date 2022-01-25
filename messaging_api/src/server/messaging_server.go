@@ -113,6 +113,17 @@ func (ms messagingServer) UpdateMessage(ctx context.Context, pb_message *proto_m
 	return &Proto_response, nil
 }
 
+func (ms messagingServer) KickUser(ctx context.Context, pb_kick_request *proto_messaging.KickUserRequest) (*proto_messaging.SvrMsg, error) {
+	err := ms.controller.KickUser(ctx, pb_kick_request)
+	var msg *proto_messaging.SvrMsg
+	if err != nil {
+		msg = poblateMsg(err)
+	} else {
+		msg = poblateMsg(server_message.NewCustomMessage(http.StatusOK, "user kicked"))
+	}
+	return msg, nil
+}
+
 func poblateMsg(msg server_message.Svr_message) *proto_messaging.SvrMsg {
 	pb_new_msg := proto_messaging.SvrMsg{
 		Status:  int64(msg.GetStatus()),

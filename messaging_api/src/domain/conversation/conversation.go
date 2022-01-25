@@ -38,6 +38,7 @@ type UserConversation struct {
 	ConversationUuid string  `json:"conversation_uuid"`
 	LastAccessUuid   string  `json:"last_access_uuid"` //Cambio a timestamp
 	CreatedAt        float64 `json:"created_at"`
+	Deleted          int64   `json:"deleted"`
 }
 
 func (uc *UserConversation) SetTwilioSid(twilio_sid string) {

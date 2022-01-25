@@ -11,6 +11,7 @@ import (
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/conversation"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/message"
 	"github.com/flydevs/chat-app-api/messaging-api/src/domain/uuids"
+	"github.com/flydevs/chat-app-api/messaging-api/src/utils/timeutils"
 )
 
 //queries
@@ -55,6 +56,8 @@ type MessagingDBRepository interface {
 	CreateConversation(conversation.Conversation) (*uuids.Uuid, server_message.Svr_message)
 	CreateUserConversation(conversation.CreateUserConversationRequest) server_message.Svr_message
 	CreateMessage(message.Message) (*uuids.Uuid, server_message.Svr_message)
+
+	KickUser(user_conversation_uuid string) server_message.Svr_message
 
 	GetConversationsByUser(string) ([]conversation.ConversationAndParticipants, server_message.Svr_message)
 	UpdateConversationInfo(string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
@@ -232,6 +235,7 @@ func (dbr *messagingDBRepository) UpdateMessage(uuid string, text string) (*mess
 	return &result, nil
 }
 
+//Add participant
 func (dbr *messagingDBRepository) CreateUserConversation(convo conversation.CreateUserConversationRequest) server_message.Svr_message {
 	dbclient := postgresql.GetSession()
 	var rows [][]interface{}
@@ -372,4 +376,20 @@ func (dbr *messagingDBRepository) CountMessages(last_read_message_uuid, last_mes
 		return nil, server_message.NewInternalError()
 	}
 	return &unread_messages, nil
+}
+
+func (dbr *messagingDBRepository) KickUser(user_conversation_uuid string) server_message.Svr_message {
+	client := postgresql.GetSession()
+	query := GoquDialect.Update("user_conversation").Set(goqu.Record{"delete": timeutils.GetNow()}).Where(goqu.Ex{"uuid": user_conversation_uuid})
+	toSQL, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error in KickUser function, generating sql", err)
+		return server_message.NewInternalError()
+	}
+	err = client.Execute(toSQL)
+	if err != nil {
+		logger.Error("error in KickUser function, executing sql", err)
+		return server_message.NewInternalError()
+	}
+	return nil
 }

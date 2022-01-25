@@ -26,6 +26,9 @@ type MessagingController interface {
 	CreateConversation(context.Context, *proto_messaging.Conversation) (*proto_messaging.Uuid, server_message.Svr_message)
 	CreateMessage(context.Context, *proto_messaging.CreateMessageRequest) (*proto_messaging.Uuid, server_message.Svr_message)
 	CreateUserConversation(context.Context, *proto_messaging.CreateUserConversationRequest) server_message.Svr_message
+
+	KickUser(ctx context.Context, proto_kick_request *proto_messaging.KickUserRequest) server_message.Svr_message
+
 	GetConversationsByUser(context.Context, *proto_messaging.Uuid) ([]*proto_messaging.ConversationAndParticipants, server_message.Svr_message)
 	GetMessagesByConversation(context.Context, *proto_messaging.GetMessages) ([]*proto_messaging.Message, server_message.Svr_message)
 	UpdateConversationInfo(context.Context, *proto_messaging.Conversation) (*proto_messaging.Conversation, server_message.Svr_message)
@@ -208,6 +211,18 @@ func (mc messagingController) UpdateMessage(ctx context.Context, pb_message *pro
 	var proto_message_updated proto_messaging.Message
 	message_updated.Poblate(true, &proto_message_updated)
 	return &proto_message_updated, nil
+}
+func (mc messagingController) KickUser(ctx context.Context, proto_kick_request *proto_messaging.KickUserRequest) server_message.Svr_message {
+	md, aErr := validateContext(ctx)
+	if aErr != nil {
+		return aErr
+	}
+	verification_uuid, aErr := fetchUuid(md)
+	if aErr != nil {
+		return aErr
+	}
+
+	return mc.svc.KickUser(proto_kick_request.UserConversation.GetUuid(), proto_kick_request.Conversation.GetUuid(), *verification_uuid)
 }
 
 func validateContext(ctx context.Context) (metadata.MD, server_message.Svr_message) {

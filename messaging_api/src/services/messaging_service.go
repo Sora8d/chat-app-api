@@ -21,6 +21,8 @@ type MessagingService interface {
 	CreateMessage(context.Context, string, message.Message) (*uuids.Uuid, server_message.Svr_message)
 	CreateUserConversation(context.Context, string, bool, conversation.CreateUserConversationRequest) server_message.Svr_message
 
+	KickUser(player_to_kick_uuid, convo_uuid, requester_uuid string) server_message.Svr_message
+
 	GetConversationsByUser(string) (conversation.ConversationAndParticipantsSlice, server_message.Svr_message)
 	GetConversationByUuid(string) (*conversation.Conversation, server_message.Svr_message)
 	UpdateConversationInfo(string, string, conversation.ConversationInfo) (*conversation.Conversation, server_message.Svr_message)
@@ -242,6 +244,15 @@ func (ms *messagingService) UpdateMessage(message_uuid, verification_uuid, text 
 	message.SetConversationUuid("")
 	return message, nil
 
+}
+func (ms *messagingService) KickUser(player_to_kick_uuid, convo_uuid, requester_uuid string) server_message.Svr_message {
+	//Validation
+	//Later if group admins are added this is where admin rights will be checked for the backs.
+	_, aErr := ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(requester_uuid, convo_uuid)
+	if aErr != nil {
+		return aErr
+	}
+	return ms.dbrepo.KickUser(player_to_kick_uuid)
 }
 
 func compareUuids(uuid1, uuid2 string) bool {

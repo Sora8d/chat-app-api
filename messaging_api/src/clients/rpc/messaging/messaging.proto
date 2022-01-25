@@ -20,6 +20,7 @@ package flydevs_chat_app_messaging;
         rpc UpdateMessage(Message) returns (MessageMsgResponse) {}
         
         rpc CreateUserConversation(CreateUserConversationRequest) returns (SvrMsg) {}
+        rpc KickUser(KickUserRequest) returns (SvrMsg) {}
  }
      //  mensaje - post- productor de eventos- llama a kafka - 
 
@@ -62,6 +63,11 @@ message ArrayConversationResponse{
 message CreateUserConversationRequest{
     Uuid conversation_uuid =1;
     repeated UserConversation user_conversations =2;
+}
+
+message KickUserRequest{
+    Uuid userConversation =1;
+    Uuid conversation =2;
 }
 
 // ----------
