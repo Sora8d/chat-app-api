@@ -380,7 +380,7 @@ func (dbr *messagingDBRepository) CountMessages(last_read_message_uuid, last_mes
 
 func (dbr *messagingDBRepository) KickUser(user_conversation_uuid string) server_message.Svr_message {
 	client := postgresql.GetSession()
-	query := GoquDialect.Update("user_conversation").Set(goqu.Record{"delete": timeutils.GetNow()}).Where(goqu.Ex{"uuid": user_conversation_uuid})
+	query := GoquDialect.Update("user_conversation").Set(goqu.Record{"deleted": timeutils.GetNow()}).Where(goqu.Ex{"uuid": user_conversation_uuid})
 	toSQL, _, err := query.ToSQL()
 	if err != nil {
 		logger.Error("error in KickUser function, generating sql", err)

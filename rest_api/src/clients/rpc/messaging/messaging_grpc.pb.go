@@ -28,6 +28,7 @@ type MessagingProtoInterfaceClient interface {
 	GetMessagesByConversation(ctx context.Context, in *GetMessages, opts ...grpc.CallOption) (*ArrayMessageResponse, error)
 	UpdateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageMsgResponse, error)
 	CreateUserConversation(ctx context.Context, in *CreateUserConversationRequest, opts ...grpc.CallOption) (*SvrMsg, error)
+	KickUser(ctx context.Context, in *KickUserRequest, opts ...grpc.CallOption) (*SvrMsg, error)
 }
 
 type messagingProtoInterfaceClient struct {
@@ -101,6 +102,15 @@ func (c *messagingProtoInterfaceClient) CreateUserConversation(ctx context.Conte
 	return out, nil
 }
 
+func (c *messagingProtoInterfaceClient) KickUser(ctx context.Context, in *KickUserRequest, opts ...grpc.CallOption) (*SvrMsg, error) {
+	out := new(SvrMsg)
+	err := c.cc.Invoke(ctx, "/flydevs_chat_app_messaging.MessagingProtoInterface/KickUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MessagingProtoInterfaceServer is the server API for MessagingProtoInterface service.
 // All implementations must embed UnimplementedMessagingProtoInterfaceServer
 // for forward compatibility
@@ -115,6 +125,7 @@ type MessagingProtoInterfaceServer interface {
 	GetMessagesByConversation(context.Context, *GetMessages) (*ArrayMessageResponse, error)
 	UpdateMessage(context.Context, *Message) (*MessageMsgResponse, error)
 	CreateUserConversation(context.Context, *CreateUserConversationRequest) (*SvrMsg, error)
+	KickUser(context.Context, *KickUserRequest) (*SvrMsg, error)
 	mustEmbedUnimplementedMessagingProtoInterfaceServer()
 }
 
@@ -142,6 +153,9 @@ func (UnimplementedMessagingProtoInterfaceServer) UpdateMessage(context.Context,
 }
 func (UnimplementedMessagingProtoInterfaceServer) CreateUserConversation(context.Context, *CreateUserConversationRequest) (*SvrMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUserConversation not implemented")
+}
+func (UnimplementedMessagingProtoInterfaceServer) KickUser(context.Context, *KickUserRequest) (*SvrMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KickUser not implemented")
 }
 func (UnimplementedMessagingProtoInterfaceServer) mustEmbedUnimplementedMessagingProtoInterfaceServer() {
 }
@@ -283,6 +297,24 @@ func _MessagingProtoInterface_CreateUserConversation_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MessagingProtoInterface_KickUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KickUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessagingProtoInterfaceServer).KickUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/flydevs_chat_app_messaging.MessagingProtoInterface/KickUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessagingProtoInterfaceServer).KickUser(ctx, req.(*KickUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MessagingProtoInterface_ServiceDesc is the grpc.ServiceDesc for MessagingProtoInterface service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -317,6 +349,10 @@ var MessagingProtoInterface_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateUserConversation",
 			Handler:    _MessagingProtoInterface_CreateUserConversation_Handler,
+		},
+		{
+			MethodName: "KickUser",
+			Handler:    _MessagingProtoInterface_KickUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

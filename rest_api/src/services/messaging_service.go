@@ -18,6 +18,7 @@ type MessagingServiceInterface interface {
 	CreateMessage(context.Context, *messaging.CreateMessageRequest) domain.Response
 	CreateConversation(context.Context, *messaging.Conversation) domain.Response
 	CreateUserConversation(context.Context, *messaging.CreateUserConversationRequest) domain.Response
+	KickUser(context.Context, *messaging.KickUserRequest) domain.Response
 	GetConversationsByUser(context.Context, *messaging.Uuid) domain.Response
 	GetMessagesByConversation(context.Context, *messaging.GetMessages) domain.Response
 	UpdateMessage(context.Context, *messaging.Message) domain.Response
@@ -41,6 +42,10 @@ func (ms messagingService) CreateConversation(ctx context.Context, request *mess
 
 func (ms messagingService) CreateUserConversation(ctx context.Context, request *messaging.CreateUserConversationRequest) domain.Response {
 	return Response.CreateResponse(nil, ms.msg_repo.CreateUserConversation(ctx, request))
+}
+
+func (ms messagingService) KickUser(ctx context.Context, request *messaging.KickUserRequest) domain.Response {
+	return Response.CreateResponse(nil, ms.msg_repo.KickUser(ctx, request))
 }
 
 func (ms messagingService) GetConversationsByUser(ctx context.Context, request *messaging.Uuid) domain.Response {

@@ -250,7 +250,11 @@ func (ms *messagingService) KickUser(player_to_kick_uuid, convo_uuid, requester_
 	//Later if group admins are added this is where admin rights will be checked for the backs.
 	_, aErr := ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(requester_uuid, convo_uuid)
 	if aErr != nil {
-		return aErr
+		return server_message.NewCustomMessage(403, "you're not part of this conversation")
+	}
+	_, aErr = ms.dbrepo.GetUserConversationByUuid(player_to_kick_uuid)
+	if aErr != nil {
+		return server_message.NewBadRequestError("participant not found")
 	}
 	return ms.dbrepo.KickUser(player_to_kick_uuid)
 }

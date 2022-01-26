@@ -29,6 +29,7 @@ var (
 		"/flydevs_chat_app_messaging.MessagingProtoInterface/GetMessagesByConversation": 0,
 		"/flydevs_chat_app_messaging.MessagingProtoInterface/UpdateMessage":             0,
 		"/flydevs_chat_app_messaging.MessagingProtoInterface/CreateUserConversation":    0,
+		"/flydevs_chat_app_messaging.MessagingProtoInterface/KickUser":                  0,
 	}
 )
 
