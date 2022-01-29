@@ -34,7 +34,7 @@ const (
 
 	queryGetUserConversationForUser         = "SELECT id, uuid, twilio_sid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE user_id=$1;"
 	queryGetUserConversationByUuid          = "SELECT id, uuid, twilio_sid, user_id, user_uuid, conversation_id, conversation_uuid, last_access_uuid, date_part('epoch',created_at) FROM user_conversation WHERE uuid=$1;"
-	queryGetUserConversationForConversation = "SELECT uc.id, uc.uuid, uc.twilio_sid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at) FROM user_conversation uc JOIN conversation c ON uc.conversation_id = c.id WHERE c.uuid=$1;"
+	queryGetUserConversationForConversation = "SELECT uc.id, uc.uuid, uc.twilio_sid, uc.user_id, uc.user_uuid, uc.conversation_id, uc.conversation_uuid, uc.last_access_uuid, date_part('epoch',uc.created_at) FROM user_conversation uc JOIN conversation c ON uc.conversation_id = c.id WHERE c.uuid=$1 AND deleted=0;"
 	queryUserConversationUpdateLastAccess   = "UPDATE user_conversation SET last_access_uuid=$2 WHERE uuid=$1 RETURNING uuid, last_access_uuid;"
 )
 

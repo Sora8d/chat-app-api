@@ -104,6 +104,7 @@ func (ms *messagingService) CreateUserConversation(ctx context.Context, verifica
 	if verify_uuid {
 		_, err = ms.dbrepo.FetchUserConversationByUserUuidConversationUuid(verification_uuid, userconvos_request.Conversation.Uuid)
 		if err != nil {
+			//Add clause to send custom "you dont form part of this conversation and fix the one in kickparticipant to just be sent if status 404"
 			return err
 		}
 	}
@@ -142,7 +143,7 @@ func (ms *messagingService) GetConversationsByUser(user_uuid string) (conversati
 	messages_to_fetch := []string{}
 	for index, convo_response := range conversations {
 		ucs, aErr := ms.dbrepo.GetUserConversationsForConversation(convo_response.Conversation.Uuid, convo_response.UserConversation.Uuid)
-		if aErr != nil {
+		if aErr != nil && aErr.GetStatus() != 404 {
 			return nil, aErr
 		}
 		conversations[index].Participants = ucs

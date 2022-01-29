@@ -9,7 +9,7 @@ func mapUrls() {
 func messageUrls() {
 	router.POST("/message", messaging_controller.CreateMessage)
 	router.POST("/conversation", messaging_controller.CreateConversation)
-	router.POST("/user_conversation", messaging_controller.CreateUserConversation)
+	router.POST("/conversation/add_user", messaging_controller.CreateUserConversation)
 	router.POST("/conversation/kick_user", messaging_controller.KickUser)
 	router.GET("/conversation/:uuid", messaging_controller.GetConversationsByUser)
 	router.GET("/message/:uuid", messaging_controller.GetMessagesByConversation)
