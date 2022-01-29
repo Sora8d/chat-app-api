@@ -81,6 +81,14 @@ func (ucs *UserConversationSlice) ParseIds(user_slice []*users.User) server_mess
 	return nil
 }
 
+func (ucs *UserConversationSlice) GetIds() []int64 {
+	var ids []int64
+	for _, uc := range *ucs {
+		ids = append(ids, uc.UserId)
+	}
+	return ids
+}
+
 type ConversationAndParticipants struct {
 	Conversation `json:"conversation"`
 	UserConversation

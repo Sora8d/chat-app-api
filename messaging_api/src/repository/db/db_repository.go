@@ -75,6 +75,7 @@ type MessagingDBRepository interface {
 	GetUserConversationByUuid(string) (*conversation.UserConversation, server_message.Svr_message)
 
 	FetchUserConversationByUserUuidConversationUuid(user_uuid string, convo_uuid string) (*string, server_message.Svr_message)
+	FetchUCByUserIdsConversationId(ids []int64, convo_id int64) ([]string, server_message.Svr_message)
 }
 
 type messagingDBRepository struct {
@@ -312,6 +313,31 @@ func (dbr *messagingDBRepository) FetchUserConversationByUserUuidConversationUui
 		return nil, server_message.NewInternalError()
 	}
 	return &result_uuid, nil
+}
+
+func (dbr *messagingDBRepository) FetchUCByUserIdsConversationId(ids []int64, convo_id int64) ([]string, server_message.Svr_message) {
+	dbclient := postgresql.GetSession()
+	query := GoquDialect.From("user_conversation").Select("user_conversation.uuid").Join(goqu.T("conversation"), goqu.On(goqu.Ex{"conversation_id": convo_id})).Where(goqu.Ex{"user_conversation.user_id": ids, "deleted": 0})
+	toSql, _, err := query.ToSQL()
+	if err != nil {
+		logger.Error("error generating goqu sql in FetchUCByUserIdsConversationId", err)
+		return nil, server_message.NewInternalError()
+	}
+	rows, err := dbclient.Query(toSql)
+	if err != nil {
+		logger.Error("error executing query sql in FetchUCByUserIdsConversationId", err)
+		return nil, server_message.NewInternalError()
+	}
+	strings := []string{}
+	for rows.Next() {
+		var str string
+		if err := rows.Scan(&str); err != nil {
+			logger.Error("error scanning sql in FetchUCByUserIdsConversationId", err)
+			return nil, server_message.NewInternalError()
+		}
+		strings = append(strings, str)
+	}
+	return strings, nil
 }
 
 func (dbr *messagingDBRepository) GetUserConversationsForConversation(uuid, exclude_uuid string) ([]conversation.UserConversation, server_message.Svr_message) {

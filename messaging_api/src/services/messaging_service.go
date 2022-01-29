@@ -116,6 +116,13 @@ func (ms *messagingService) CreateUserConversation(ctx context.Context, verifica
 		return err
 	}
 	userconvos_request.UserConversationSlice.ParseIds(users)
+	invalid_strings, err := ms.dbrepo.FetchUCByUserIdsConversationId(userconvos_request.UserConversationSlice.GetIds(), convo.Id)
+	if err != nil {
+		return err
+	}
+	if len(invalid_strings) != 0 {
+		return server_message.NewBadRequestError("one of the participants is already part of the conversation")
+	}
 	for i, uc := range userconvos_request.UserConversationSlice {
 		//Twilio---
 		sid, err := ms.twiorepo.JoinParticipant(convo.TwilioSid, uc.UserUuid)
