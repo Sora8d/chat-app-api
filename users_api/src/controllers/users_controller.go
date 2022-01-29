@@ -127,7 +127,7 @@ func (us userController) SearchContact(ctx context.Context, queries *pb.SearchCo
 	if strings.TrimSpace(queries.Query) == "" {
 		return nil, server_message.NewBadRequestError("queries cant be blank")
 	}
-	profiles, err := us.svc.SearchContact(queries.Query, *user_uuid)
+	profiles, err := us.svc.SearchContact(queries.Query, *user_uuid, queries.ExcludeUuids)
 	if err != nil {
 		return nil, err
 	}

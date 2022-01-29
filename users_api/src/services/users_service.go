@@ -15,7 +15,7 @@ type UsersServiceInterface interface {
 	UpdateUserProfile(users.UuidandProfile, bool) (*users.UserProfile, server_message.Svr_message)
 	UpdateUserProfileActive(string, bool) server_message.Svr_message
 
-	SearchContact(string, string) (users.UserProfileSlice, server_message.Svr_message)
+	SearchContact(string, string, []string) (users.UserProfileSlice, server_message.Svr_message)
 }
 
 type userService struct {
@@ -120,8 +120,9 @@ func (us userService) DeleteUser(uuid string) server_message.Svr_message {
 	return nil
 }
 
-func (us userService) SearchContact(query, user_uuid string) (users.UserProfileSlice, server_message.Svr_message) {
-	profile, aErr := us.dbRepo.SearchContact(query, user_uuid)
+func (us userService) SearchContact(query, user_uuid string, exclude_uuids []string) (users.UserProfileSlice, server_message.Svr_message) {
+	exclude_uuids = append(exclude_uuids, user_uuid)
+	profile, aErr := us.dbRepo.SearchContact(query, exclude_uuids)
 	if aErr != nil {
 		return nil, aErr
 	}

@@ -88,4 +88,5 @@ message UpdateActiveRequest{
 
 message SearchContactRequest{
     string query =1;
+    repeated string excludeUuids =2;
 }

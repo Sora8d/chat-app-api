@@ -72,8 +72,12 @@ func (uctrl usersController) UpdateUser(c *gin.Context) {
 
 func (uctrl usersController) SearchContact(c *gin.Context) {
 	query := c.Query("query")
+	excludes := c.QueryArray("ex_uuid")
 	new_request := users.SearchContactRequest{}
 	new_request.Query = query
+	if len(excludes) > 0 {
+		new_request.ExcludeUuids = excludes
+	}
 	ctx := appendHeaderAccessToken(c.Request.Header, context.Background())
 	result_response_object := uctrl.us_svs.SearchContact(ctx, &new_request)
 	c.JSON(result_response_object.Response.GetStatus(), result_response_object)
